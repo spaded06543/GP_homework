@@ -14,12 +14,21 @@
  ===============================================================*/
 #include "../Include/FlyWin32.h"
 #include "DefFunction.h"
+#include "template_3D.h"
+#include <assert.h>
 
 VIEWPORTid vID;                     // the major viewport
 SCENEid sID;                        // the 3D scene
 OBJECTid cID, tID;                  // the main camera and the terrain for terrain following
 CHARACTERid actorID;                // the major character
-ACTIONid idleID, runID, curPoseID;  // three actions
+ACTIONid idleID, runID, curPoseID, natkID;  // three actions
+
+FnCharacter donzo;
+int donzo_life = 200;
+int donzo_dead_time = 0;
+int donzo_wudi_time = 0;
+CHARACTERid donzoID;
+
 ROOMid terrainRoomID = FAILED_ID;
 TEXTid textID = FAILED_ID;
 
@@ -91,28 +100,45 @@ void FyMain ( int argc, char **argv )
   FySetModelPath ( "Data\\NTU6\\Characters" );
   FySetTexturePath ( "Data\\NTU6\\Characters" );
   FySetCharacterPath ( "Data\\NTU6\\Characters" );
-  actorID = scene.LoadCharacter ( "Lyubu2" );
+  actorID = scene.LoadCharacter("Lyubu2");
 
   // put the character on terrain
   float pos[3], fDir[3], uDir[3];
-  FnCharacter actor;
-  actor.ID ( actorID );
   pos[0] = 3569.0f; pos[1] = -3208.0f; pos[2] = 1000.0f;
-  fDir[0] = 1.0f; fDir[1] = -1.0f; fDir[2] = 0.0f;
+  fDir[0] = 0.0f; fDir[1] = -1.0f; fDir[2] = 0.0f;
   uDir[0] = 0.0f; uDir[1] = 0.0f; uDir[2] = 1.0f;
-  actor.SetDirection ( fDir, uDir );
+  {
+	  FnCharacter actor;
+	  actor.ID(actorID);
+	  actor.SetDirection(fDir, uDir);
 
-  actor.SetTerrainRoom ( terrainRoomID, 10.0f );
-  beOK = actor.PutOnTerrain ( pos );
+	  actor.SetTerrainRoom(terrainRoomID, 10.0f);
+	  beOK = actor.PutOnTerrain(pos);
 
-  // Get two character actions pre-defined at Lyubu2
-  idleID = actor.GetBodyAction ( NULL, "Idle" );
-  runID = actor.GetBodyAction ( NULL, "Run" );
+	  // Get two character actions pre-defined at Lyubu2
+	  idleID = actor.GetBodyAction(NULL, "Idle");
+	  runID = actor.GetBodyAction(NULL, "Run");
+	  natkID = actor.GetBodyAction(NULL, "NormalAttack1");
 
-  // set the character to idle action
-  curPoseID = idleID;
-  actor.SetCurrentAction ( NULL, 0, curPoseID );
-  actor.Play ( START, 0.0f, FALSE, TRUE );
+	  // set the character to idle action
+	  curPoseID = idleID;
+	  actor.SetCurrentAction(NULL, 0, curPoseID);
+	  actor.Play(START, 0.0f, FALSE, TRUE);
+  }
+  //load donzo
+  {
+	  donzoID = scene.LoadCharacter("Donzo2");
+	  dot pos = dot(3569.0f, -3208.0f, 1000.0f) + 300 * dot(0, -1, 0);
+	  dot fDi = dot(0, 1, 0);
+	  dot uDi = dot(0, 0, 1);
+	  donzo.ID(donzoID);
+	  donzo.SetDirection(fDi.c_array(), uDi.c_array());
+	  donzo.SetTerrainRoom(terrainRoomID, 10.0f);
+	  beOK = donzo.PutOnTerrain(pos.c_array());
+	  assert(beOK);
+	  donzo.SetCurrentAction(NULL, 0, donzo.GetBodyAction(NULL, "Idle"));
+	  donzo.Play(START, 0.0f, FALSE, TRUE);
+  }
 
   // translate the camera
   cID = scene.CreateObject ( CAMERA );
@@ -128,9 +154,9 @@ void FyMain ( int argc, char **argv )
   camera.SetDirection ( fDir, uDir );
 
   // lighting
-  float mainLightPos[3] = { -4579.0, -714.0, 15530.0 };
-  float mainLightFDir[3] = { 0.276, 0.0, -0.961 };
-  float mainLightUDir[3] = { 0.961, 0.026, 0.276 };
+  float mainLightPos[3] = { -4579.0f, -714.0f, 15530.0f };
+  float mainLightFDir[3] = { 0.276f, 0.0f, -0.961f };
+  float mainLightUDir[3] = { 0.961f, 0.026f, 0.276f };
 
   FnLight lgt;
   lgt.ID ( scene.CreateObject ( LIGHT ) );
@@ -154,6 +180,7 @@ void FyMain ( int argc, char **argv )
   FyDefineHotKey ( FY_D, Movement, FALSE );	      // same as Right
   FyDefineHotKey ( FY_A, Movement, FALSE );	      // same as Left
   FyDefineHotKey ( FY_S, Movement, FALSE );	      // same as Down
+  FyDefineHotKey ( FY_Z, Movement, FALSE );	      // normal attack
 
   // define some mouse functions
   FyBindMouseFunction ( LEFT_MOUSE, InitPivot, PivotCam, NULL, NULL );
@@ -178,6 +205,18 @@ void GameAI ( int skip )
   actor.ID ( actorID );
   actor.Play ( LOOP, (float) skip, FALSE, TRUE );
 
+  donzo.ID(donzoID);
+  if (donzo_dead_time < 168){
+	  donzo.Play(LOOP, (float)skip, FALSE, TRUE);
+	  donzo_dead_time += (donzo_life==0) * skip;
+  }
+  --donzo_wudi_time;
+  if (donzo_wudi_time == 2){
+	  donzo.SetCurrentAction(NULL, 0, donzo.GetBodyAction(NULL, "Idle"));
+	  donzo.Play(START, 0.0f, FALSE, TRUE);
+  }
+  if (donzo_wudi_time < 0)donzo_wudi_time = 0;
+
   // get camera object
   FnCamera camera;
   camera.ID ( cID );
@@ -194,8 +233,39 @@ void GameAI ( int skip )
   camera.GetDirection ( cam_fDir, cam_uDir );
   actor.GetDirection ( act_fDir, NULL );
 
+  int is_atking = curPoseID==natkID;
+
+  if (is_atking){
+	  dot l_pos,fD;
+	  actor.GetPosition(l_pos.c_array(), NULL);
+	  actor.GetDirection(fD.c_array(), NULL);
+
+	  if (donzo_wudi_time==0){
+		  dot d_pos;
+		  donzo.GetPosition(d_pos.c_array(), NULL);
+		  dot dd = d_pos - l_pos;
+		  dou sint = my_dis(fD*dd) / my_dis(fD) / my_dis(dd);
+		  if (my_dis(dd) < 140 && fD%dd >= 0 && asin(fabs(sint)) <= pi * 20.0 / 180){
+			  int old_life = donzo_life;
+			  donzo_life = max(donzo_life - 10, 0);
+			  if (old_life <= 0){
+				  //do_nothing
+			  }
+			  else if (donzo_life <= 0){
+				  donzo.SetCurrentAction(NULL, 0, donzo.GetBodyAction(NULL, "Die"));
+				  donzo.Play(ONCE, 0.0f, FALSE, TRUE);
+			  }
+			  else{
+				  donzo.SetCurrentAction(NULL, 0, donzo.GetBodyAction(NULL, "Damage1"));
+				  donzo.Play(ONCE, 0.0f, FALSE, TRUE);
+				  donzo_wudi_time += 10;
+			  }
+		  }
+	  }
+  }
+
   // dis-accuracy prevent
-  float e = EPSILON;
+  const float e = EPSILON;
 
   // z value by cam.dir x act.dir
   float z   = cam_fDir[0] * act_fDir[1] - cam_fDir[1] * act_fDir[0],
@@ -203,16 +273,15 @@ void GameAI ( int skip )
 
   // ***** Up *****
   if ( FyCheckHotKeyStatus ( FY_W ) || FyCheckHotKeyStatus ( FY_UP ) ) {
-    float p = cam_fDir[0] * act_fDir[0];
 
     // if not facing up, face to up
-    if ( p < 0 || z < -e || z > e ) {
+    if ( dot < 0 || z < -e || z > e ) {
       set_act_dir ( cam_fDir, act_fDir );
       actor.SetDirection ( act_fDir, NULL );
     }
 
     // actor move
-    actor.MoveForward ( 12.0f, TRUE, FALSE, 0.0f, TRUE );
+	if (is_atking==0)actor.MoveForward(12.0f, TRUE, FALSE, 0.0f, TRUE);
     camera.GetPosition ( cam_pos );
     actor.GetPosition ( act_pos );
 
@@ -225,16 +294,15 @@ void GameAI ( int skip )
 
   // ***** Down *****
   if ( FyCheckHotKeyStatus ( FY_S ) || FyCheckHotKeyStatus ( FY_DOWN ) ) {
-    float p = cam_fDir[0] * act_fDir[0];
 
     // if not facing down, face to down
-    if ( p > 0 || z < -e || z > e ) {
+    if ( dot > 0 || z < -e || z > e ) {
       set_act_dir ( cam_fDir, act_fDir, DOWN );
       actor.SetDirection ( act_fDir, NULL );
     }
 
     // actor move
-    actor.MoveForward ( 12.0f, TRUE, FALSE, 0.0f, TRUE );
+	if (is_atking == 0)actor.MoveForward(12.0f, TRUE, FALSE, 0.0f, TRUE);
     camera.GetPosition ( cam_pos );
     actor.GetPosition ( act_pos );
 
@@ -257,12 +325,14 @@ void GameAI ( int skip )
     actor.GetPosition ( act_pos );
     camera.GetPosition ( cam_pos );
     actor.TurnRight ( THETA );
-    if ( actor.MoveForward ( 2 * DISTANCE_P * sin ( degree2rad ( THETA ) ), TRUE, FALSE, 0.0f, TRUE ) == BOUNDARY ) {
-      float Dir[3] = { 0.0f, 0.0f, 1.0f };
-      camera.SetDirection ( NULL, Dir );
-      camera.TurnRight ( -90.0f + THETA );
-      camera.MoveForward ( 12.0f, TRUE, FALSE, 0.0f, TRUE );
-    }
+	if (is_atking == 0){
+		if (actor.MoveForward(2 * DISTANCE_P * sin(degree2rad(THETA)), TRUE, FALSE, 0.0f, TRUE) == BOUNDARY) {
+			float Dir[3] = { 0.0f, 0.0f, 1.0f };
+			camera.SetDirection(NULL, Dir);
+			camera.TurnRight(-90.0f + THETA);
+			camera.MoveForward(12.0f, TRUE, FALSE, 0.0f, TRUE);
+		}
+	}
 
     // camera facing actor
     actor.GetPosition ( act_pos );
@@ -285,12 +355,14 @@ void GameAI ( int skip )
     actor.GetPosition ( act_pos );
     camera.GetPosition ( cam_pos );
     actor.TurnRight ( -THETA );
-    if ( actor.MoveForward ( 2 * DISTANCE_P * sin ( degree2rad ( THETA ) ), TRUE, FALSE, 0.0f, TRUE ) == BOUNDARY ) {
-      float Dir[3] = { 0.0f, 0.0f, 1.0f };
-      camera.SetDirection ( NULL, Dir );
-      camera.TurnRight ( 90.0f - THETA );
-      camera.MoveForward ( 12.0f, TRUE, FALSE, 0.0f, TRUE );
-    }
+	if (is_atking == 0){
+		if (actor.MoveForward(2 * DISTANCE_P * sin(degree2rad(THETA)), TRUE, FALSE, 0.0f, TRUE) == BOUNDARY) {
+			float Dir[3] = { 0.0f, 0.0f, 1.0f };
+			camera.SetDirection(NULL, Dir);
+			camera.TurnRight(90.0f - THETA);
+			camera.MoveForward(12.0f, TRUE, FALSE, 0.0f, TRUE);
+		}
+	}
 
     // camera facing actor
     actor.GetPosition ( act_pos );
@@ -392,7 +464,6 @@ void RenderIt( int skip )
   if ( frame >= 1000 ) {
     frame = 0;
   }
-
   FnText text;
   text.ID ( textID );
 
@@ -408,8 +479,36 @@ void RenderIt( int skip )
   text.Write ( fDirS, 20, 50, 255, 255, 0 );
   text.Write ( uDirS, 20, 65, 255, 255, 0 );
 
-  text.End ();
+  dot d_pos, l_pos;
+  FnCharacter actor;
+  actor.ID(actorID);
+  actor.GetPosition(l_pos.c_array(), NULL);
+  donzo.GetPosition(d_pos.c_array(), NULL);
+  dot dd = d_pos - l_pos;
+  dot fD;
+  actor.GetDirection(fD.c_array(), NULL);
+  char tts[256];
+  sprintf(tts, "theta = %.3f",asin(fabs(my_dis(fD*dd) / my_dis(fD) / my_dis(dd))));
+  text.Write(tts, 20, 80, 255, 255, 0);
+  sprintf(tts, "maxtheta = %.3f", pi*20 / 180);
+  text.Write(tts, 20, 95, 255, 255, 0);
+  sprintf(tts, "donzolife=%d", donzo_life);
+  text.Write(tts, 20, 110, 255, 255, 0);
+  sprintf(tts, "dis=%.3f", my_dis(dd));
+  text.Write(tts, 20, 125, 255, 255, 0);
+  int is_in = my_dis(dd) < 100 && fD%dd >= 0 && asin(fabs(my_dis(fD*dd) / my_dis(fD) / my_dis(dd))) <= pi * 20.0 / 180;
+  if (my_dis(dd) < 140)text.Write("dis ok", 20, 140, 255, 255, 0);
+  if (fD%dd >= 0      )text.Write("face ok", 20, 155, 255, 255, 0);
+  if (asin(fabs(my_dis(fD*dd) / my_dis(fD) / my_dis(dd))) <= pi * 20.0 / 180)text.Write("theta ok", 20, 170, 255, 255, 0);
+  if (is_in           )text.Write("attack ok", 20, 185, 255, 255, 0);
 
+  sprintf(tts, "donzo_dead_time=%d", donzo_dead_time);
+  text.Write(tts, 300, 50, 255, 255, 0);
+  sprintf(tts, "donzo_wudi_time=%d", donzo_wudi_time);
+  text.Write(tts, 300, 65, 255, 255, 0);
+
+  text.End ();
+  
   // swap buffer
   FySwapBuffers ();
 }
@@ -420,38 +519,50 @@ void RenderIt( int skip )
  -------------------*/
 void Movement ( BYTE code, BOOL4 value )
 {
-  FnCharacter actor;
-  actor.ID ( actorID );
-
-  if ( value ) {
-    if ( code == FY_UP    || code == FY_W ||
-         code == FY_RIGHT || code == FY_D ||
-         code == FY_LEFT  || code == FY_A ||
-         code == FY_DOWN || code == FY_S ) {
-      if ( curPoseID == idleID ) {
-        curPoseID = runID;
-        actor.SetCurrentAction ( 0, NULL, curPoseID, 5.0f );
-        actor.Play ( START, 0.0f, FALSE, TRUE );
-      }
-    }
-  }
-  else {
-    if ( code == FY_UP    || code == FY_W ||
-         code == FY_RIGHT || code == FY_D ||
-         code == FY_LEFT  || code == FY_A ||
-         code == FY_DOWN  || code == FY_S ) {
-      if ( curPoseID == runID ) {
-        if ( !FyCheckHotKeyStatus ( FY_UP )    && !FyCheckHotKeyStatus ( FY_W ) &&
-             !FyCheckHotKeyStatus ( FY_RIGHT ) && !FyCheckHotKeyStatus ( FY_D ) &&
-				     !FyCheckHotKeyStatus ( FY_LEFT )  && !FyCheckHotKeyStatus ( FY_A ) &&
-             !FyCheckHotKeyStatus ( FY_DOWN )  && !FyCheckHotKeyStatus ( FY_S ) ) {
-          curPoseID = idleID;
-          actor.SetCurrentAction ( 0, NULL, curPoseID, 5.0f );
-          actor.Play ( START, 0.0f, FALSE, TRUE );
-        }
-      }
-    }
-  }
+	FnCharacter actor;
+	actor.ID ( actorID );
+	int is_moving_code = 
+		code == FY_UP    || code == FY_W ||
+		code == FY_RIGHT || code == FY_D ||
+		code == FY_LEFT  || code == FY_A ||
+		code == FY_DOWN  || code == FY_S;
+	int has_moving_key =
+		FyCheckHotKeyStatus(FY_UP)    || FyCheckHotKeyStatus(FY_W) ||
+		FyCheckHotKeyStatus(FY_RIGHT) || FyCheckHotKeyStatus(FY_D) ||
+		FyCheckHotKeyStatus(FY_LEFT)  || FyCheckHotKeyStatus(FY_A) ||
+		FyCheckHotKeyStatus(FY_DOWN)  || FyCheckHotKeyStatus(FY_S);
+	if ( value ) {
+		if (is_moving_code) {
+			if ( curPoseID == idleID ) {
+				curPoseID = runID;
+				actor.SetCurrentAction ( 0, NULL, curPoseID, 5.0f );
+				actor.Play ( START, 0.0f, FALSE, TRUE );
+			}
+		}
+		else if (code == FY_Z){
+			if (curPoseID != natkID){
+				curPoseID = natkID;
+				actor.SetCurrentAction(0, NULL, curPoseID, 5.0f);
+				actor.Play(START, 0.0f, FALSE, TRUE);
+			}
+		}
+	}
+	else {
+		if (is_moving_code) {
+			if ( curPoseID == runID ) {
+				if (has_moving_key==0) {
+					curPoseID = idleID;
+					actor.SetCurrentAction ( 0, NULL, curPoseID, 5.0f );
+					actor.Play ( START, 0.0f, FALSE, TRUE );
+				}
+			}
+		}
+		else if (code == FY_Z){
+			curPoseID = has_moving_key?runID:idleID;
+			actor.SetCurrentAction(0, NULL, curPoseID, 5.0f);
+			actor.Play(START, 0.0f, FALSE, TRUE);
+		}
+	}
 }
 
 

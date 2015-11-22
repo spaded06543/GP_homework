@@ -34,7 +34,7 @@ float cam_height = DEFAULT_HEIGHT;
 
 float degree2rad ( float degree )
 {
-  return degree * 2 * M_PI / 360;
+  return float( degree * 2 * M_PI / 360 );
 }
 
 float distance ( float *a, float *b )
@@ -114,8 +114,8 @@ void mix_dir ( float *cam_fDir, float *act_fDir, int dir )
     Dir2[0] = -cam_fDir[1], Dir2[1] =  cam_fDir[0];
   }
 
-  float d = sqrt ( 2 );
-  act_fDir[0] = ( Dir1[0] + Dir2[0] ) / d;
-  act_fDir[1] = ( Dir1[1] + Dir2[1] ) / d;
+  const float d = float( sqrt ( 0.5 ) );
+  act_fDir[0] = ( Dir1[0] + Dir2[0] ) * d;
+  act_fDir[1] = ( Dir1[1] + Dir2[1] ) * d;
   act_fDir[2] = 0;
 }
