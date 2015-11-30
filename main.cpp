@@ -15,6 +15,9 @@
 #include "../Include/FlyWin32.h"
 #include "DefFunction.h"
 #include "template_3D.h"
+#include<vector>
+#include<map>
+#include<algorithm>
 #include <assert.h>
 
 VIEWPORTid vID;                     // the major viewport
@@ -23,14 +26,74 @@ OBJECTid cID, tID;                  // the main camera and the terrain for terra
 CHARACTERid actorID;                // the major character
 ACTIONid idleID, runID, curPoseID, natkID;  // three actions
 
-FnCharacter donzo;
-int donzo_life = 200;
-int donzo_dead_time = 0;
-int donzo_wudi_time = 0;
-CHARACTERid donzoID;
-
 ROOMid terrainRoomID = FAILED_ID;
 TEXTid textID = FAILED_ID;
+
+string cname[3] = {
+	"Donzo2",
+	"Lyubu2",
+	"Robber02"
+};
+char sIdle[3][20] = {
+	"Idle",
+	"Idle",
+	"CombatIdle"
+};
+map<string, char*>aIdle = {
+	{ cname[0], sIdle[0] },
+	{ cname[1], sIdle[1] },
+	{ cname[2], sIdle[2] }
+};
+char sDamN[3][20] = {
+	"DamageL",
+	"LeftDamaged",
+	"Damage1"
+};
+map<string, char*>aDamN = {
+	{ cname[0], sDamN[0] },
+	{ cname[1], sDamN[1] },
+	{ cname[2], sDamN[2] }
+};
+char sDiee[3][20] = {
+	"Die",
+	"Die",
+	"Dead"
+};
+map<string, char*>aDiee = {
+	{ cname[0], sDiee[0] },
+	{ cname[1], sDiee[1] },
+	{ cname[2], sDiee[2] }
+};
+typedef struct BattleC : public FnCharacter {
+	int life;
+	int dead_time, wudi_time;
+	char name[20];
+	BattleC(){}
+	BattleC(char* name_, SCENEid sID, ROOMid terrainRoomID, dot pos, dot fDi, dot uDi, int life_){
+		{//strcopy
+			int tl = 0;
+			for (; name_[tl]; tl++)name[tl] = name_[tl];
+			name[tl] = 0;
+		}
+		FnScene scene; scene.ID(sID);
+		FnObject terrain; terrain.ID(terrainRoomID);
+		CHARACTERid ID = scene.LoadCharacter(name);
+		(*this).ID(ID);
+		(*this).SetDirection(fDi.c_array(), uDi.c_array());
+		(*this).SetTerrainRoom(terrainRoomID, 10.0f);
+		BOOL4 beOK = (*this).PutOnTerrain(pos.c_array());
+		if (beOK == 0){
+			fprintf(stderr,"load %s failed!",name);
+		}
+		assert(beOK);
+		(*this).SetCurrentAction(NULL, 0, (*this).GetBodyAction(NULL, aIdle[name]));
+		(*this).Play(START, 0.0f, FALSE, TRUE);
+		life = life_;
+		dead_time = wudi_time = 0;
+	}
+}BattleC;
+vector<BattleC*>allBattleC;
+BattleC donzos[20], robbrs[20];
 
 
 // some globals
@@ -126,18 +189,20 @@ void FyMain ( int argc, char **argv )
 	  actor.Play(START, 0.0f, FALSE, TRUE);
   }
   //load donzo
-  {
-	  donzoID = scene.LoadCharacter("Donzo2");
-	  dot pos = dot(3569.0f, -3208.0f, 1000.0f) + 300 * dot(0, -1, 0);
-	  dot fDi = dot(0, 1, 0);
+  for (int i = 0; i < 8; i++){
+	  dot fDi = dot(cos(2 * pi*i / 8), sin(2 * pi*i / 8), 0);
 	  dot uDi = dot(0, 0, 1);
-	  donzo.ID(donzoID);
-	  donzo.SetDirection(fDi.c_array(), uDi.c_array());
-	  donzo.SetTerrainRoom(terrainRoomID, 10.0f);
-	  beOK = donzo.PutOnTerrain(pos.c_array());
-	  assert(beOK);
-	  donzo.SetCurrentAction(NULL, 0, donzo.GetBodyAction(NULL, "Idle"));
-	  donzo.Play(START, 0.0f, FALSE, TRUE);
+	  dot pos = dot(3569.0f, -3208.0f, 1000.0f) - 150 * fDi;
+	  donzos[i]=BattleC("Donzo2", sID, terrainRoomID, pos, fDi, uDi, 200);
+	  allBattleC.push_back(&donzos[i]);
+  }
+  //load robber
+  for (int i = 0; i < 16; i++){
+	  dot fDi = dot(cos(2 * pi*i / 16), sin(2 * pi*i / 16), 0);
+	  dot uDi = dot(0, 0, 1);
+	  dot pos = dot(3569.0f, -3208.0f, 1000.0f) - 250 * fDi;
+	  robbrs[i] = BattleC("Robber02", sID, terrainRoomID, pos, fDi, uDi, 80);
+	  allBattleC.push_back(&robbrs[i]);
   }
 
   // translate the camera
@@ -205,61 +270,58 @@ void GameAI ( int skip )
   actor.ID ( actorID );
   actor.Play ( LOOP, (float) skip, FALSE, TRUE );
 
-  donzo.ID(donzoID);
-  if (donzo_dead_time < 168){
-	  donzo.Play(LOOP, (float)skip, FALSE, TRUE);
-	  donzo_dead_time += (donzo_life==0) * skip;
-  }
-  --donzo_wudi_time;
-  if (donzo_wudi_time == 2){
-	  donzo.SetCurrentAction(NULL, 0, donzo.GetBodyAction(NULL, "Idle"));
-	  donzo.Play(START, 0.0f, FALSE, TRUE);
-  }
-  if (donzo_wudi_time < 0)donzo_wudi_time = 0;
+  for (BattleC* pointer : allBattleC){
+	  BattleC& beatenC = *pointer;
 
+	  beatenC.Play(beatenC.life <= 0 || beatenC.wudi_time != 0 ? ONCE : LOOP, (float)skip, FALSE, TRUE);
+
+	  beatenC.dead_time += (beatenC.life == 0) * skip;
+	  beatenC.wudi_time = max(beatenC.wudi_time - skip, 0);
+	  if (beatenC.wudi_time == 1){
+		  beatenC.SetCurrentAction(NULL, 0, beatenC.GetBodyAction(NULL, aIdle[beatenC.name]));
+		  beatenC.Play(START, 0.0f, FALSE, TRUE);
+	  }
+  }
   // get camera object
-  FnCamera camera;
-  camera.ID ( cID );
-
+  FnCamera camera; camera.ID ( cID );
   // get terrain object
-  FnObject terrain;
-  terrain.ID ( tID );
-
+  FnObject terrain; terrain.ID ( tID );
   // camera & actor position
   float cam_pos[3], act_pos[3];
-
   // get camera & actor direction
   float cam_fDir[3], cam_uDir[3], act_fDir[3];
   camera.GetDirection ( cam_fDir, cam_uDir );
   actor.GetDirection ( act_fDir, NULL );
 
-  int is_atking = curPoseID==natkID;
+  int is_atking = curPoseID == natkID;
 
   if (is_atking){
-	  dot l_pos,fD;
-	  actor.GetPosition(l_pos.c_array(), NULL);
-	  actor.GetDirection(fD.c_array(), NULL);
+	  dot a_pos, fDi;
+	  actor.GetPosition(a_pos.c_array(), NULL);
+	  actor.GetDirection(fDi.c_array(), NULL);
+	  for (BattleC* pointer : allBattleC)if (pointer->life != 0 && pointer->wudi_time == 0){
+		  BattleC& beatenC = *pointer;
+		  dot b_pos;
+		  beatenC.GetPosition(b_pos.c_array(), NULL);
+		  dot dd = b_pos - a_pos;
+		  dot dandd = dan(dd);
+		  dou sint = my_dis(dan(fDi)*dandd);
+		  BOOL4 isbeaten = my_dis(dd) < 140 && fDi%dandd >= 0 && asin(fabs(sint)) <= pi*25.0 / 180;
+		  if (isbeaten == 0)continue;
 
-	  if (donzo_wudi_time==0){
-		  dot d_pos;
-		  donzo.GetPosition(d_pos.c_array(), NULL);
-		  dot dd = d_pos - l_pos;
-		  dou sint = my_dis(fD*dd) / my_dis(fD) / my_dis(dd);
-		  if (my_dis(dd) < 140 && fD%dd >= 0 && asin(fabs(sint)) <= pi * 20.0 / 180){
-			  int old_life = donzo_life;
-			  donzo_life = max(donzo_life - 10, 0);
-			  if (old_life <= 0){
-				  //do_nothing
-			  }
-			  else if (donzo_life <= 0){
-				  donzo.SetCurrentAction(NULL, 0, donzo.GetBodyAction(NULL, "Die"));
-				  donzo.Play(ONCE, 0.0f, FALSE, TRUE);
-			  }
-			  else{
-				  donzo.SetCurrentAction(NULL, 0, donzo.GetBodyAction(NULL, "Damage1"));
-				  donzo.Play(ONCE, 0.0f, FALSE, TRUE);
-				  donzo_wudi_time += 10;
-			  }
+		  beatenC.life = max(beatenC.life - 10, 0);
+		  if (sgn(dd%dd)){
+			  beatenC.SetDirection(((-1)*dandd).c_array(), NULL);
+			  beatenC.SetPosition((b_pos + 5 * dandd).c_array());
+		  }
+		  if (beatenC.life <= 0){
+			  beatenC.SetCurrentAction(NULL, 0, beatenC.GetBodyAction(NULL, aDiee[beatenC.name]));
+			  beatenC.Play(ONCE, 0.0f, FALSE, TRUE);
+		  }
+		  else{
+			  beatenC.SetCurrentAction(NULL, 0, beatenC.GetBodyAction(NULL, aDamN[beatenC.name]));
+			  beatenC.Play(ONCE, 0.0f, FALSE, TRUE);
+			  beatenC.wudi_time += 24;
 		  }
 	  }
   }
@@ -479,10 +541,17 @@ void RenderIt( int skip )
   text.Write ( fDirS, 20, 50, 255, 255, 0 );
   text.Write ( uDirS, 20, 65, 255, 255, 0 );
 
+  char tts[256];
+  for (int i = 0; i < 8; i++){
+	  sprintf(tts,"donzos[%d] life = %d",i,donzos[i].life);
+	  text.Write(tts, 20, 95+15*i, 255, 255, 0);
+  }
+  /*
   dot d_pos, l_pos;
   FnCharacter actor;
   actor.ID(actorID);
   actor.GetPosition(l_pos.c_array(), NULL);
+  BattleC&donzo = *donzos;
   donzo.GetPosition(d_pos.c_array(), NULL);
   dot dd = d_pos - l_pos;
   dot fD;
@@ -492,7 +561,7 @@ void RenderIt( int skip )
   text.Write(tts, 20, 80, 255, 255, 0);
   sprintf(tts, "maxtheta = %.3f", pi*20 / 180);
   text.Write(tts, 20, 95, 255, 255, 0);
-  sprintf(tts, "donzolife=%d", donzo_life);
+  sprintf(tts, "donzolife=%d", donzo.life);
   text.Write(tts, 20, 110, 255, 255, 0);
   sprintf(tts, "dis=%.3f", my_dis(dd));
   text.Write(tts, 20, 125, 255, 255, 0);
@@ -502,10 +571,11 @@ void RenderIt( int skip )
   if (asin(fabs(my_dis(fD*dd) / my_dis(fD) / my_dis(dd))) <= pi * 20.0 / 180)text.Write("theta ok", 20, 170, 255, 255, 0);
   if (is_in           )text.Write("attack ok", 20, 185, 255, 255, 0);
 
-  sprintf(tts, "donzo_dead_time=%d", donzo_dead_time);
+  sprintf(tts, "donzo_dead_time=%d", donzo.dead_time);
   text.Write(tts, 300, 50, 255, 255, 0);
-  sprintf(tts, "donzo_wudi_time=%d", donzo_wudi_time);
+  sprintf(tts, "donzo.wudi_time=%d", donzo.wudi_time);
   text.Write(tts, 300, 65, 255, 255, 0);
+  */
 
   text.End ();
   
