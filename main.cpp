@@ -276,8 +276,9 @@ void GameAI ( int skip )
 	  beatenC.Play(beatenC.life <= 0 || beatenC.wudi_time != 0 ? ONCE : LOOP, (float)skip, FALSE, TRUE);
 
 	  beatenC.dead_time += (beatenC.life == 0) * skip;
+	  int old_wudi_time = beatenC.wudi_time;
 	  beatenC.wudi_time = max(beatenC.wudi_time - skip, 0);
-	  if (beatenC.wudi_time <= 1){
+	  if (old_wudi_time > 1 && beatenC.wudi_time <= 1){
 		  beatenC.SetCurrentAction(NULL, 0, beatenC.GetBodyAction(NULL, aIdle[beatenC.name]));
 		  beatenC.Play(START, 0.0f, FALSE, TRUE);
 	  }
