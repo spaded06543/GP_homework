@@ -24,8 +24,8 @@ OBJECTid cID;
 int now_mode = 1;
 //1 menu mode
 //2 select mode
-//3 fight mode
-
+//3 load to fight mode
+//4 fight mode
 
 // some globals
 int frame = 0;
@@ -62,7 +62,7 @@ void FyMain ( int argc, char **argv )
   BOOL4 beOK = FyStartFlyWin32 ( "NTU@2014 Homework #01 - Use Fly2", 0, 0, 800, 600, FALSE );
 
   MM.load();
-  FM.load();
+  //FM.load();
   SM.load();
   cID = MM.cID;
   // set Hotkeys
@@ -76,6 +76,7 @@ void FyMain ( int argc, char **argv )
   FyDefineHotKey ( FY_A, Movement, FALSE );	      // same as Left
   FyDefineHotKey ( FY_S, Movement, FALSE );	      // same as Down
   FyDefineHotKey ( FY_Z, Movement, FALSE );	      // normal attack
+  FyDefineHotKey ( FY_L, Movement, FALSE );	      // something
 
   // define some mouse functions
   FyBindMouseFunction ( LEFT_MOUSE, InitPivot, PivotCam, NULL, NULL );
@@ -96,8 +97,8 @@ void FyMain ( int argc, char **argv )
 void GameAI ( int skip )
 {
 	if (now_mode == 1)MM.GameAI(skip);
-	if (now_mode == 2)SM.GameAI(skip);
-	if (now_mode == 3)FM.GameAI(skip);
+	if (now_mode == 2 || now_mode == 3)SM.GameAI(skip);
+	if (now_mode == 4)FM.GameAI(skip);
 }
 
 
@@ -108,8 +109,8 @@ void GameAI ( int skip )
 void RenderIt( int skip )
 {
 	if (now_mode == 1)MM.RenderIt(skip);
-	if (now_mode == 2)SM.RenderIt(skip);
-	if (now_mode == 3)FM.RenderIt(skip);
+	if (now_mode == 2 || now_mode == 3)SM.RenderIt(skip);
+	if (now_mode == 4)FM.RenderIt(skip);
 	// swap buffer
 	FySwapBuffers ();
 }
@@ -120,12 +121,23 @@ void RenderIt( int skip )
  -------------------*/
 void Movement ( BYTE code, BOOL4 value )
 {
-	int next_mode = 1;
+	int next_mode = now_mode;
 	if (now_mode == 1)next_mode = MM.Movement(code, value);
 	if (now_mode == 2)next_mode = SM.Movement(code, value);
-	if (now_mode == 3)next_mode = FM.Movement(code, value);
+	if (now_mode == 3)return;
+	if (now_mode == 4)next_mode = FM.Movement(code, value);
+	if (!(1 <= next_mode && next_mode <= 4)){
+		fprintf(stderr, "mode %d return wrong mode %d", now_mode, next_mode);
+	}
+	assert(1 <= next_mode && next_mode <= 4);
 	now_mode = next_mode;
-	cID = MM.cID;
+	if (now_mode == 1)cID = MM.cID;
+	if (now_mode == 2)cID = SM.cID;
+	if (now_mode == 3){
+		FM.load(FIGHT1P, "Lyubu2", "Donzo2");
+		now_mode = 4;
+	}
+	if (now_mode == 4)cID = FM.cID;
 }
 
 

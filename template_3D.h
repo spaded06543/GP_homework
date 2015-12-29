@@ -12,8 +12,11 @@ typedef struct dot{
 	dot(dou x_, dou y_, dou z_){
 		x = x_, y = y_, z = z_;
 	}
-	float*c_array(){
-		return (float*)this;
+	dou&operator[](int x){
+		return ((dou*)this)[x];
+	}
+	dou* operator&(){
+		return (dou*)this;
 	}
 }dot;
 dot operator-(dot a,dot b){return dot( a.x-b.x,a.y-b.y,a.z-b.z );}

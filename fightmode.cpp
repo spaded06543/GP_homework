@@ -1,70 +1,109 @@
-string cname[3] = {
+#define SZ(x) (int)(x).size()
+#define TYPESOFC 6
+string cname[TYPESOFC] = {
 	"Donzo2",
 	"Lyubu2",
-	"Robber02"
+	"Robber02",
+	"Footman01",
+	"Sorcerer01",
+	"WarLord01"
 };
-char sIdle[3][20] = {
+char sPath[TYPESOFC][64] = {
+	"Data\\NTU6\\Characters",
+	"Data\\NTU6\\Characters",
+	"Data\\NTU6\\Characters",
+	"Data\\NTU6\\Characters_More\\Footman01",
+	"Data\\NTU6\\Characters_More\\Sorcerer01",
+	"Data\\NTU6\\Characters_More\\WarLord01"
+};
+char sAttN[TYPESOFC][64] = {
+	"AttackL1",
+	"NormalAttack1",
+	"NormalAttack1",
+	"1H_swing_left",
+	"swing_right",
+	"2H_swing_mid_left"
+};
+char sIdle[TYPESOFC][64] = {
 	"Idle",
 	"Idle",
-	"CombatIdle"
+	"CombatIdle",
+	"Idle",
+	"Idle",
+	"Idle"
 };
-map<string, char*>aIdle = {
-	{ cname[0], sIdle[0] },
-	{ cname[1], sIdle[1] },
-	{ cname[2], sIdle[2] }
+char sRunn[TYPESOFC][64] = {
+	"Run",
+	"Run",
+	"Run",
+	"Run",
+	"Run",
+	"Run"
 };
-char sDamN[3][20] = {
+char sDamN[TYPESOFC][64] = {
 	"DamageL",
 	"LeftDamaged",
-	"Damage1"
+	"Damage1",
+	"Hit_from_front",
+	"Hit_from_back",
+	"Hit_from_front"
 };
-map<string, char*>aDamN = {
-	{ cname[0], sDamN[0] },
-	{ cname[1], sDamN[1] },
-	{ cname[2], sDamN[2] }
-};
-char sDiee[3][20] = {
+char sDiee[TYPESOFC][64] = {
 	"Die",
 	"Die",
-	"Dead"
+	"Dead",
+	"Dying_A",
+	"Dying_A",
+	"Dying_A"
 };
-map<string, char*>aDiee = {
-	{ cname[0], sDiee[0] },
-	{ cname[1], sDiee[1] },
-	{ cname[2], sDiee[2] }
-};
+map<string, char*>aPath, aAttN, aIdle, aRunn, aDamN, aDiee;
+void ini_actions_name(){
+	static BOOL4 is_done = 0;
+	if (is_done)return;
+	is_done = 1;
+	for (int i = 0; i < TYPESOFC; i++){
+		aPath.insert(pair<string, char*>(cname[i], sPath[i]));
+		aAttN.insert(pair<string, char*>(cname[i], sAttN[i]));
+		aIdle.insert(pair<string, char*>(cname[i], sIdle[i]));
+		aRunn.insert(pair<string, char*>(cname[i], sRunn[i]));
+		aDamN.insert(pair<string, char*>(cname[i], sDamN[i]));
+		aDiee.insert(pair<string, char*>(cname[i], sDiee[i]));
+	}
+}
 typedef struct BattleC : public FnCharacter {
 	int life;
 	int dead_time, wudi_time;
 	char name[20];
+	CHARACTERid aID;
 	BattleC(){}
-	BattleC(char* name_, SCENEid sID, ROOMid terrainRoomID, dot pos, dot fDi, dot uDi, int life_){
-		{//strcopy
-			int tl = 0;
-			for (; name_[tl]; tl++)name[tl] = name_[tl];
-			name[tl] = 0;
-		}
+	BattleC(const char* name_, SCENEid sID, ROOMid terrainRoomID, dot pos, dot fDi, dot uDi, int life_){
+		strcpy(name,name_);
+		FySetModelPath(aPath[name]);
+		FySetTexturePath(aPath[name]);
+		FySetCharacterPath(aPath[name]);
 		FnScene scene; scene.ID(sID);
 		FnObject terrain; terrain.ID(terrainRoomID);
-		CHARACTERid ID = scene.LoadCharacter(name);
-		(*this).ID(ID);
-		(*this).SetDirection(fDi.c_array(), uDi.c_array());
-		(*this).SetTerrainRoom(terrainRoomID, 10.0f);
-		BOOL4 beOK = (*this).PutOnTerrain(pos.c_array());
+		ID(aID = scene.LoadCharacter(name));
+		SetDirection(&fDi, &uDi);
+		SetTerrainRoom(terrainRoomID, 10.0f);
+		BOOL4 beOK = PutOnTerrain(&pos);
 		if (beOK == 0){
 			fprintf(stderr, "load %s failed!", name);
 		}
 		assert(beOK);
-		(*this).SetCurrentAction(NULL, 0, (*this).GetBodyAction(NULL, aIdle[name]));
-		(*this).Play(START, 0.0f, FALSE, TRUE);
+		SetCurrentAction(NULL, 0, GetBodyAction(NULL, aIdle[name]));
+		Play(START, 0.0f, FALSE, TRUE);
 		life = life_;
 		dead_time = wudi_time = 0;
 	}
 }BattleC;
 
 vector<BattleC*>allBattleC;
-BattleC donzos[20], robbrs[20];
-
+BattleC donzos[20], robbrs[20], mainC;
+BattleC preloadmainC[TYPESOFC];
+#define FIGHT1P 1
+#define FIGHT2P 2 //todo
+#define FIGHT32 3 //todo
 struct{
 	VIEWPORTid vID;                     // the major viewport
 	SCENEid sID;                        // the 3D scene
@@ -72,9 +111,13 @@ struct{
 	ROOMid terrainRoomID;
 	TEXTid textID;
 
-	CHARACTERid actorID;                // the major character
-	ACTIONid idleID, runID, curPoseID, natkID;  // three actions
-	void load(){
+	ACTIONid idleID, runnID, natkID;  // three actions
+	ACTIONid curPoseID;
+
+	int is_end;
+	void load(int mode = FIGHT1P, const char*p1 = "Lyubu2", const char*p2 = "Donzo2"){
+		ini_actions_name();
+		is_end = 0;
 		terrainRoomID = textID = FAILED_ID;
 		// setup the data searching paths
 		FySetShaderPath("Data\\NTU6\\Shaders");
@@ -110,49 +153,36 @@ struct{
 		room.AddObject(tID);
 
 		// load the character
-		FySetModelPath("Data\\NTU6\\Characters");
-		FySetTexturePath("Data\\NTU6\\Characters");
-		FySetCharacterPath("Data\\NTU6\\Characters");
 
-		actorID = scene.LoadCharacter("Lyubu2");
-
-		// put the character on terrain
-		dot pos = dot(3569, -3208, 1000);
-		dot fDi = dot(0, -1, 0);
-		dot uDi = dot(0, 0, 1);
-		{
-			FnCharacter actor;
-			actor.ID(actorID);
-			actor.SetDirection(fDi.c_array(), uDi.c_array());
-
-			actor.SetTerrainRoom(terrainRoomID, 10.0f);
-			BOOL4 beOK = actor.PutOnTerrain(pos.c_array());
-
-			// Get two character actions pre-defined at Lyubu2
-			idleID = actor.GetBodyAction(NULL, "Idle");
-			runID = actor.GetBodyAction(NULL, "Run");
-			natkID = actor.GetBodyAction(NULL, "NormalAttack1");
-
-			// set the character to idle action
-			curPoseID = idleID;
-			actor.SetCurrentAction(NULL, 0, curPoseID);
-			actor.Play(START, 0.0f, FALSE, TRUE);
-		}
-		//load donzo
-		for (int i = 0; i < 8; i++){
-			dot fDi = dot(cos(2 * pi*i / 8), sin(2 * pi*i / 8), 0);
+		allBattleC.clear();
+		const int DN = TYPESOFC, RN = DN - 2 + (string(p1) == p2);
+		//load all
+		for (int i = 0; i < DN; i++)if (cname[i] != p1 && cname[i] != p2){
+			dot fDi = dot(cos(2 * pi*i / RN), sin(2 * pi*i / RN), 0);
 			dot uDi = dot(0, 0, 1);
 			dot pos = dot(3569.0f, -3208.0f, 1000.0f) - 150 * fDi;
-			donzos[i] = BattleC("Donzo2", sID, terrainRoomID, pos, fDi, uDi, 200);
+			donzos[i] = BattleC(cname[i].c_str(), sID, terrainRoomID, pos, fDi, uDi, 30);
 			allBattleC.push_back(&donzos[i]);
 		}
-		//load robber
-		for (int i = 0; i < 16; i++){
-			dot fDi = dot(cos(2 * pi*i / 16), sin(2 * pi*i / 16), 0);
+		//load 2P
+		{
+			dot fDi = dot(cos(2 * pi / 4), sin(2 * pi / 4), 0);
 			dot uDi = dot(0, 0, 1);
-			dot pos = dot(3569.0f, -3208.0f, 1000.0f) - 250 * fDi;
-			robbrs[i] = BattleC("Robber02", sID, terrainRoomID, pos, fDi, uDi, 80);
-			allBattleC.push_back(&robbrs[i]);
+			dot pos = dot(3569.0f, -3208.0f, 1000.0f) - 1000 * fDi;
+			donzos[DN] = BattleC(p2, sID, terrainRoomID, pos, fDi, uDi, 100);
+			allBattleC.push_back(&donzos[DN]);
+		}
+		//load 1P
+		dot fDi = dot(0, -1, 0);
+		dot uDi = dot(0, 0, 1);
+		dot pos = dot(3569, -3208, 1000);
+		{
+			mainC = BattleC(p1, sID, terrainRoomID, pos, fDi, uDi, 200);
+			allBattleC.push_back(&mainC);
+			idleID = mainC.GetBodyAction(NULL, aIdle[mainC.name]);
+			runnID = mainC.GetBodyAction(NULL, aRunn[mainC.name]);
+			natkID = mainC.GetBodyAction(NULL, aAttN[mainC.name]);
+			curPoseID = idleID;
 		}
 		// translate the camera
 		cID = scene.CreateObject(CAMERA);
@@ -163,21 +193,19 @@ struct{
 		camera.SetFarPlane(100000.0f);
 
 		// set camera initial position and orientation
-		{
-			set_cam_dir(fDi.c_array(), uDi.c_array());
-			set_cam_pos(pos.c_array(), pos.c_array(), uDi.c_array());
-			camera.SetPosition(pos.c_array());
-			camera.SetDirection(fDi.c_array(), uDi.c_array());
-		}
+		set_cam_dir(&fDi, &uDi);
+		set_cam_pos(&pos, &pos, &uDi);
+		camera.SetPosition(&pos);
+		camera.SetDirection(&fDi, &uDi);
 		// lighting
-		float mainLightPos[3] = { -4579.0f, -714.0f, 15530.0f };
-		float mainLightFDir[3] = { 0.276f, 0.0f, -0.961f };
-		float mainLightUDir[3] = { 0.961f, 0.026f, 0.276f };
+		dot mainLightPos = dot( -4579,   -714,   15530);
+		dot mainLightFDi = dot(0.276f,   0.0f, -0.961f);
+		dot mainLightUDi = dot(0.961f, 0.026f,  0.276f);
 
 		FnLight lgt;
 		lgt.ID(scene.CreateObject(LIGHT));
 		lgt.Translate(mainLightPos[0], mainLightPos[1], mainLightPos[2], REPLACE);
-		lgt.SetDirection(mainLightFDir, mainLightUDir);
+		lgt.SetDirection(&mainLightFDi, &mainLightUDi);
 		lgt.SetLightType(PARALLEL_LIGHT);
 		lgt.SetColor(1.0f, 1.0f, 1.0f);
 		lgt.SetName("MainLight");
@@ -188,10 +216,6 @@ struct{
 	}
 	void GameAI(int skip){
 		// play character pose
-		FnCharacter actor;
-		actor.ID(actorID);
-		actor.Play(LOOP, (float)skip, FALSE, TRUE);
-
 		for (BattleC* pointer : allBattleC){
 			BattleC& beatenC = *pointer;
 
@@ -206,26 +230,30 @@ struct{
 			}
 		}
 
+		FnCharacter&actor=mainC;
 		int is_atking = curPoseID == natkID;
 
 		if (is_atking){
 			dot a_pos, fDi;
-			actor.GetPosition(a_pos.c_array(), NULL);
-			actor.GetDirection(fDi.c_array(), NULL);
+			actor.GetPosition(&a_pos, NULL);
+			actor.GetDirection(&fDi, NULL);
+			fDi = dan(fDi);
 			for (BattleC* pointer : allBattleC)if (pointer->life != 0 && pointer->wudi_time == 0){
 				BattleC& beatenC = *pointer;
 				dot b_pos;
-				beatenC.GetPosition(b_pos.c_array(), NULL);
+				beatenC.GetPosition(&b_pos, NULL);
 				dot dd = b_pos - a_pos;
+				dou disab = my_dis(dd);
+				if (sgn(disab) == 0)continue;//too close
 				dot dandd = dan(dd);
-				dou sint = my_dis(dan(fDi)*dandd);
-				BOOL4 isbeaten = my_dis(dd) < 140 && fDi%dandd >= 0 && asin(fabs(sint)) <= pi*25.0 / 180;
+				dou sint = my_dis(fDi*dandd);
+				BOOL4 isbeaten = disab < 140 && fDi%dandd >= 0 && asin(fabs(sint)) <= pi*25.0 / 180;
 				if (isbeaten == 0)continue;
 
 				beatenC.life = max(beatenC.life - 10, 0);
 				if (sgn(dd%dd)){
-					beatenC.SetDirection(((-1)*dandd).c_array(), NULL);
-					beatenC.SetPosition((b_pos + 5 * dandd).c_array());
+					beatenC.SetDirection(&((-1)*dandd), NULL);
+					beatenC.SetPosition(&(b_pos + 5 * dandd));
 				}
 				if (beatenC.life <= 0){
 					beatenC.SetCurrentAction(NULL, 0, beatenC.GetBodyAction(NULL, aDiee[beatenC.name]));
@@ -238,7 +266,12 @@ struct{
 				}
 			}
 		}
-
+		//judge end
+		{
+			int dead_cnt = 0;
+			for (BattleC* pointer : allBattleC)dead_cnt += (pointer->life == 0);
+			is_end = (mainC.life <= 0 || dead_cnt >= SZ(allBattleC) - 1);
+		}
 		// get camera object
 		FnCamera camera; camera.ID(cID);
 		// get terrain object
@@ -411,8 +444,7 @@ struct{
 		}*/
 	}
 	int Movement(BYTE code, BOOL4 value){
-		FnCharacter actor;
-		actor.ID(actorID);
+		FnCharacter&actor=mainC;
 		int is_moving_code =
 			code == FY_UP || code == FY_W ||
 			code == FY_RIGHT || code == FY_D ||
@@ -426,7 +458,7 @@ struct{
 		if (value) {
 			if (is_moving_code) {
 				if (curPoseID == idleID) {
-					curPoseID = runID;
+					curPoseID = runnID;
 					actor.SetCurrentAction(0, NULL, curPoseID, 5.0f);
 					actor.Play(START, 0.0f, FALSE, TRUE);
 				}
@@ -441,7 +473,7 @@ struct{
 		}
 		else {
 			if (is_moving_code) {
-				if (curPoseID == runID) {
+				if (curPoseID == runnID) {
 					if (has_moving_key == 0) {
 						curPoseID = idleID;
 						actor.SetCurrentAction(0, NULL, curPoseID, 5.0f);
@@ -450,12 +482,13 @@ struct{
 				}
 			}
 			else if (code == FY_Z){
-				curPoseID = has_moving_key ? runID : idleID;
+				curPoseID = has_moving_key ? runnID : idleID;
 				actor.SetCurrentAction(0, NULL, curPoseID, 5.0f);
 				actor.Play(START, 0.0f, FALSE, TRUE);
 			}
 		}
-		return 3;
+		if (is_end && code == FY_L && value)return 1;
+		return 4;
 	}
 	void RenderIt(int skip){
 		FnViewport vp;
@@ -495,50 +528,29 @@ struct{
 		text.Begin(vID);
 		text.Write(string, 20, 20, 255, 0, 0);
 
-		char posS[256], fDirS[256], uDirS[256];
+		char posS[256], fDiS[256], uDiS[256];
 		sprintf(posS, "pos: %8.3f %8.3f %8.3f", pos[0], pos[1], pos[2]);
-		sprintf(fDirS, "facing: %8.3f %8.3f %8.3f", fDir[0], fDir[1], fDir[2]);
-		sprintf(uDirS, "up: %8.3f %8.3f %8.3f", uDir[0], uDir[1], uDir[2]);
+		sprintf(fDiS, "facing: %8.3f %8.3f %8.3f", fDir[0], fDir[1], fDir[2]);
+		sprintf(uDiS, "up: %8.3f %8.3f %8.3f", uDir[0], uDir[1], uDir[2]);
 
 		text.Write(posS, 20, 35, 255, 255, 0);
-		text.Write(fDirS, 20, 50, 255, 255, 0);
-		text.Write(uDirS, 20, 65, 255, 255, 0);
+		text.Write(fDiS, 20, 50, 255, 255, 0);
+		text.Write(uDiS, 20, 65, 255, 255, 0);
 
 		char tts[256];
-		for (int i = 0; i < 8; i++){
-			sprintf(tts, "donzos[%d] life = %d", i, donzos[i].life);
-			text.Write(tts, 20, 95 + 15 * i, 255, 255, 0);
+		if (is_end){
+			sprintf(tts, "MISSION COMPLETE");
+			text.Write(tts, 300, 400, 255, 255, 0);
+			sprintf(tts, "PRESS L TO CONTINUE");
+			text.Write(tts, 300, 415, 255, 255, 0);
 		}
-		/*
-		dot d_pos, l_pos;
-		FnCharacter actor;
-		actor.ID(actorID);
-		actor.GetPosition(l_pos.c_array(), NULL);
-		BattleC&donzo = *donzos;
-		donzo.GetPosition(d_pos.c_array(), NULL);
-		dot dd = d_pos - l_pos;
-		dot fD;
-		actor.GetDirection(fD.c_array(), NULL);
-		char tts[256];
-		sprintf(tts, "theta = %.3f",asin(fabs(my_dis(fD*dd) / my_dis(fD) / my_dis(dd))));
-		text.Write(tts, 20, 80, 255, 255, 0);
-		sprintf(tts, "maxtheta = %.3f", pi*20 / 180);
-		text.Write(tts, 20, 95, 255, 255, 0);
-		sprintf(tts, "donzolife=%d", donzo.life);
-		text.Write(tts, 20, 110, 255, 255, 0);
-		sprintf(tts, "dis=%.3f", my_dis(dd));
-		text.Write(tts, 20, 125, 255, 255, 0);
-		int is_in = my_dis(dd) < 100 && fD%dd >= 0 && asin(fabs(my_dis(fD*dd) / my_dis(fD) / my_dis(dd))) <= pi * 20.0 / 180;
-		if (my_dis(dd) < 140)text.Write("dis ok", 20, 140, 255, 255, 0);
-		if (fD%dd >= 0      )text.Write("face ok", 20, 155, 255, 255, 0);
-		if (asin(fabs(my_dis(fD*dd) / my_dis(fD) / my_dis(dd))) <= pi * 20.0 / 180)text.Write("theta ok", 20, 170, 255, 255, 0);
-		if (is_in           )text.Write("attack ok", 20, 185, 255, 255, 0);
-
-		sprintf(tts, "donzo_dead_time=%d", donzo.dead_time);
-		text.Write(tts, 300, 50, 255, 255, 0);
-		sprintf(tts, "donzo.wudi_time=%d", donzo.wudi_time);
-		text.Write(tts, 300, 65, 255, 255, 0);
-		*/
+		else{
+			for (int i = 0; i < SZ(allBattleC); i++){
+				BattleC&battleC = *allBattleC[i];
+				sprintf(tts, "%s life = %d", battleC.name, battleC.life);
+				text.Write(tts, 20, 95 + 15 * i, 255, 255, 0);
+			}
+		}
 
 		text.End();
 	}
