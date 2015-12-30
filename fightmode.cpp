@@ -1,3 +1,4 @@
+#include<unordered_map>
 #define SZ(x) (int)(x).size()
 #define TYPESOFC 6
 string cname[TYPESOFC] = {
@@ -56,7 +57,7 @@ char sDiee[TYPESOFC][64] = {
 	"Dying_A",
 	"Dying_A"
 };
-map<string, char*>aPath, aAttN, aIdle, aRunn, aDamN, aDiee;
+unordered_map<string, char*>aPath, aAttN, aIdle, aRunn, aDamN, aDiee;
 void ini_actions_name(){
 	static BOOL4 is_done = 0;
 	if (is_done)return;
@@ -75,8 +76,11 @@ typedef struct BattleC : public FnCharacter {
 	int dead_time, wudi_time;
 	char name[20];
 	CHARACTERid aID;
+	ACTIONid attnID, idleID, runnID, damnID, dieeID;  // those actions
+	ACTIONid curpID;
+	int AItype;//0 human, 1 random
 	BattleC(){}
-	BattleC(const char* name_, SCENEid sID, ROOMid terrainRoomID, dot pos, dot fDi, dot uDi, int life_){
+	BattleC(const char* name_, SCENEid sID, ROOMid terrainRoomID, dot pos, dot fDi, dot uDi, int life_, int AItype_ = 1){
 		strcpy(name,name_);
 		FySetModelPath(aPath[name]);
 		FySetTexturePath(aPath[name]);
@@ -91,16 +95,47 @@ typedef struct BattleC : public FnCharacter {
 			fprintf(stderr, "load %s failed!", name);
 		}
 		assert(beOK);
-		SetCurrentAction(NULL, 0, GetBodyAction(NULL, aIdle[name]));
+		attnID = GetBodyAction(NULL, aAttN[name]);
+		idleID = GetBodyAction(NULL, aIdle[name]);
+		runnID = GetBodyAction(NULL, aRunn[name]);
+		damnID = GetBodyAction(NULL, aDamN[name]);
+		dieeID = GetBodyAction(NULL, aDiee[name]);
+		curpID = idleID;
+		SetCurrentAction(NULL, 0, idleID);
 		Play(START, 0.0f, FALSE, TRUE);
 		life = life_;
 		dead_time = wudi_time = 0;
+		AItype = AItype_;
+	}
+	void Nattack(BattleC&beatenC){
+		if (beatenC.life == 0 || beatenC.wudi_time != 0)return;
+		dot a_pos, b_pos, fDi;
+		GetPosition(&a_pos, NULL);
+		GetDirection(&fDi, NULL);
+		fDi = dan(fDi);
+		beatenC.GetPosition(&b_pos, NULL);
+		dot dd = b_pos - a_pos;
+		dou disab = my_dis(dd);
+		if (sgn(disab) == 0)return;//too close
+		dot dandd = dan(dd);
+		dou sint = my_dis(fDi*dandd);
+		BOOL4 isbeaten = disab < 140 && fDi%dandd >= 0 && asin(fabs(sint)) <= pi*25.0 / 180;
+		if (isbeaten == 0)return;
+		//decrease life
+		beatenC.life = max(beatenC.life - 10, 0);
+		//turn and move back
+		beatenC.SetDirection(&((-1)*dandd), NULL);
+		beatenC.SetPosition(&(b_pos + 5 * dandd));
+		//set Act
+		beatenC.SetCurrentAction(NULL, 0, beatenC.curpID = (beatenC.life <= 0 ? beatenC.dieeID : beatenC.damnID));
+		beatenC.Play(ONCE, 0.0f, FALSE, TRUE);
+		//increase wudi time
+		if (beatenC.life>0)beatenC.wudi_time += 34;
 	}
 }BattleC;
 
 vector<BattleC*>allBattleC;
 BattleC donzos[20], robbrs[20], mainC;
-BattleC preloadmainC[TYPESOFC];
 #define FIGHT1P 1
 #define FIGHT2P 2 //todo
 #define FIGHT32 3 //todo
@@ -110,9 +145,6 @@ struct{
 	OBJECTid cID, tID;                  // the main camera and the terrain for terrain following
 	ROOMid terrainRoomID;
 	TEXTid textID;
-
-	ACTIONid idleID, runnID, natkID;  // three actions
-	ACTIONid curPoseID;
 
 	int is_end;
 	void load(int mode = FIGHT1P, const char*p1 = "Lyubu2", const char*p2 = "Donzo2"){
@@ -177,12 +209,8 @@ struct{
 		dot uDi = dot(0, 0, 1);
 		dot pos = dot(3569, -3208, 1000);
 		{
-			mainC = BattleC(p1, sID, terrainRoomID, pos, fDi, uDi, 200);
+			mainC = BattleC(p1, sID, terrainRoomID, pos, fDi, uDi, 200, 0);
 			allBattleC.push_back(&mainC);
-			idleID = mainC.GetBodyAction(NULL, aIdle[mainC.name]);
-			runnID = mainC.GetBodyAction(NULL, aRunn[mainC.name]);
-			natkID = mainC.GetBodyAction(NULL, aAttN[mainC.name]);
-			curPoseID = idleID;
 		}
 		// translate the camera
 		cID = scene.CreateObject(CAMERA);
@@ -215,63 +243,63 @@ struct{
 		textID = FyCreateText("Trebuchet MS", 18, FALSE, FALSE);
 	}
 	void GameAI(int skip){
-		// play character pose
-		for (BattleC* pointer : allBattleC){
-			BattleC& beatenC = *pointer;
-
-			beatenC.Play(beatenC.life <= 0 || beatenC.wudi_time != 0 ? ONCE : LOOP, (float)skip, FALSE, TRUE);
-
-			beatenC.dead_time += (beatenC.life == 0) * skip;
-			int old_wudi_time = beatenC.wudi_time;
-			beatenC.wudi_time = max(beatenC.wudi_time - skip, 0);
-			if (old_wudi_time > 1 && beatenC.wudi_time <= 1){
-				beatenC.SetCurrentAction(NULL, 0, beatenC.GetBodyAction(NULL, aIdle[beatenC.name]));
-				beatenC.Play(START, 0.0f, FALSE, TRUE);
+		//simple AI
+		for (BattleC* pointer : allBattleC)if (pointer->AItype == 1){
+			BattleC&battleC = *pointer;
+			int rrr = rand();
+			if (rrr % (battleC.life + 10) < 10 && battleC.curpID == battleC.idleID){
+				battleC.SetCurrentAction(0, NULL, battleC.curpID = battleC.attnID, 5.0f);
+				battleC.Play(START, 0.0f, FALSE, TRUE);
+			}
+			else if (rrr % 128 == 0 && battleC.curpID == battleC.attnID){
+				battleC.SetCurrentAction(0, NULL, battleC.curpID = battleC.idleID, 5.0f);
+				battleC.Play(START, 0.0f, FALSE, TRUE);
 			}
 		}
+		// play character pose
+		const int can_move_wudi_time = 10;
+		for (BattleC* pointer : allBattleC){
+			BattleC& battleC = *pointer;
 
-		FnCharacter&actor=mainC;
-		int is_atking = curPoseID == natkID;
+			battleC.Play(battleC.life <= 0 || battleC.wudi_time != 0 ? ONCE : LOOP, (float)skip, FALSE, TRUE);
 
-		if (is_atking){
-			dot a_pos, fDi;
-			actor.GetPosition(&a_pos, NULL);
-			actor.GetDirection(&fDi, NULL);
-			fDi = dan(fDi);
-			for (BattleC* pointer : allBattleC)if (pointer->life != 0 && pointer->wudi_time == 0){
-				BattleC& beatenC = *pointer;
-				dot b_pos;
-				beatenC.GetPosition(&b_pos, NULL);
-				dot dd = b_pos - a_pos;
-				dou disab = my_dis(dd);
-				if (sgn(disab) == 0)continue;//too close
-				dot dandd = dan(dd);
-				dou sint = my_dis(fDi*dandd);
-				BOOL4 isbeaten = disab < 140 && fDi%dandd >= 0 && asin(fabs(sint)) <= pi*25.0 / 180;
-				if (isbeaten == 0)continue;
+			battleC.dead_time += (battleC.life == 0) * skip;
+			int old_wudi_time = battleC.wudi_time;
+			battleC.wudi_time = max(battleC.wudi_time - skip, 0);
+			if (old_wudi_time > can_move_wudi_time && battleC.wudi_time <= can_move_wudi_time && battleC.life > 0){
+				int want_to_move = pointer->AItype == 0 && (
+					FyCheckHotKeyStatus(FY_UP) || FyCheckHotKeyStatus(FY_W) ||
+					FyCheckHotKeyStatus(FY_RIGHT) || FyCheckHotKeyStatus(FY_D) ||
+					FyCheckHotKeyStatus(FY_LEFT) || FyCheckHotKeyStatus(FY_A) ||
+					FyCheckHotKeyStatus(FY_DOWN) || FyCheckHotKeyStatus(FY_S));
 
-				beatenC.life = max(beatenC.life - 10, 0);
-				if (sgn(dd%dd)){
-					beatenC.SetDirection(&((-1)*dandd), NULL);
-					beatenC.SetPosition(&(b_pos + 5 * dandd));
-				}
-				if (beatenC.life <= 0){
-					beatenC.SetCurrentAction(NULL, 0, beatenC.GetBodyAction(NULL, aDiee[beatenC.name]));
-					beatenC.Play(ONCE, 0.0f, FALSE, TRUE);
-				}
-				else{
-					beatenC.SetCurrentAction(NULL, 0, beatenC.GetBodyAction(NULL, aDamN[beatenC.name]));
-					beatenC.Play(ONCE, 0.0f, FALSE, TRUE);
-					beatenC.wudi_time += 24;
-				}
+				battleC.SetCurrentAction(NULL, 0, battleC.curpID = want_to_move ? battleC.runnID : battleC.idleID);
+				battleC.Play(START, 0.0f, FALSE, TRUE);
+			}
+		}
+		//attack judge
+		for (BattleC* pointer : allBattleC){
+			BattleC&battleC = *pointer;
+			BOOL4 is_atking = battleC.curpID == battleC.attnID;
+			if (is_atking == 0)continue;
+			for (BattleC* btC : allBattleC){
+				battleC.Nattack(*btC);
 			}
 		}
 		//judge end
 		{
 			int dead_cnt = 0;
 			for (BattleC* pointer : allBattleC)dead_cnt += (pointer->life == 0);
-			is_end = (mainC.life <= 0 || dead_cnt >= SZ(allBattleC) - 1);
+			if (mainC.life <= 0){
+				is_end = 1;
+			}
+			else if (dead_cnt >= SZ(allBattleC) - 1){
+				is_end = 2;
+			}
 		}
+		BOOL4 mainC_can_move = mainC.curpID != mainC.dieeID && mainC.curpID != mainC.damnID && mainC.curpID != mainC.attnID;
+		BOOL4 mainC_can_turn = mainC.curpID != mainC.dieeID && mainC.curpID != mainC.damnID;
+		FnCharacter&actor = mainC;
 		// get camera object
 		FnCamera camera; camera.ID(cID);
 		// get terrain object
@@ -293,13 +321,13 @@ struct{
 		if (FyCheckHotKeyStatus(FY_W) || FyCheckHotKeyStatus(FY_UP)) {
 
 			// if not facing up, face to up
-			if (dot < 0 || z < -e || z > e) {
+			if (mainC_can_turn && (dot < 0 || z < -e || z > e)){
 				set_act_dir(cam_fDir, act_fDir);
 				actor.SetDirection(act_fDir, NULL);
 			}
 
 			// actor move
-			if (is_atking == 0)actor.MoveForward(12.0f, TRUE, FALSE, 0.0f, TRUE);
+			if (mainC_can_move)actor.MoveForward(12.0f, TRUE, FALSE, 0.0f, TRUE);
 			camera.GetPosition(cam_pos);
 			actor.GetPosition(act_pos);
 
@@ -314,13 +342,13 @@ struct{
 		if (FyCheckHotKeyStatus(FY_S) || FyCheckHotKeyStatus(FY_DOWN)) {
 
 			// if not facing down, face to down
-			if (dot > 0 || z < -e || z > e) {
+			if (mainC_can_turn && (dot > 0 || z < -e || z > e)){
 				set_act_dir(cam_fDir, act_fDir, DOWN);
 				actor.SetDirection(act_fDir, NULL);
 			}
 
 			// actor move
-			if (is_atking == 0)actor.MoveForward(12.0f, TRUE, FALSE, 0.0f, TRUE);
+			if (mainC_can_move)actor.MoveForward(12.0f, TRUE, FALSE, 0.0f, TRUE);
 			camera.GetPosition(cam_pos);
 			actor.GetPosition(act_pos);
 
@@ -334,7 +362,7 @@ struct{
 		// ***** Right *****
 		if (FyCheckHotKeyStatus(FY_D) || FyCheckHotKeyStatus(FY_RIGHT)) {
 			// if not facing right, face to right
-			if (z > 0 || dot < -e || dot > e) {
+			if (mainC_can_turn && (z > 0 || dot < -e || dot > e)) {
 				set_act_dir(cam_fDir, act_fDir, RIGHT);
 				actor.SetDirection(act_fDir, NULL);
 			}
@@ -342,8 +370,8 @@ struct{
 			// actor move
 			actor.GetPosition(act_pos);
 			camera.GetPosition(cam_pos);
-			actor.TurnRight(THETA);
-			if (is_atking == 0){
+			if (mainC_can_turn)actor.TurnRight(THETA);
+			if (mainC_can_move){
 				if (actor.MoveForward(2 * DISTANCE_P * sin(degree2rad(THETA)), TRUE, FALSE, 0.0f, TRUE) == BOUNDARY) {
 					float Dir[3] = { 0.0f, 0.0f, 1.0f };
 					camera.SetDirection(NULL, Dir);
@@ -364,7 +392,7 @@ struct{
 		// ***** Left *****
 		if (FyCheckHotKeyStatus(FY_A) || FyCheckHotKeyStatus(FY_LEFT)) {
 			// if not facing left, face to right
-			if (z < 0 || dot < -e || dot > e) {
+			if (mainC_can_turn && (z < 0 || dot < -e || dot > e)) {
 				set_act_dir(cam_fDir, act_fDir, LEFT);
 				actor.SetDirection(act_fDir, NULL);
 			}
@@ -372,8 +400,8 @@ struct{
 			// actor move
 			actor.GetPosition(act_pos);
 			camera.GetPosition(cam_pos);
-			actor.TurnRight(-THETA);
-			if (is_atking == 0){
+			if (mainC_can_turn)actor.TurnRight(-THETA);
+			if (mainC_can_move){
 				if (actor.MoveForward(2 * DISTANCE_P * sin(degree2rad(THETA)), TRUE, FALSE, 0.0f, TRUE) == BOUNDARY) {
 					float Dir[3] = { 0.0f, 0.0f, 1.0f };
 					camera.SetDirection(NULL, Dir);
@@ -398,25 +426,25 @@ struct{
 		if ((FyCheckHotKeyStatus(FY_W) || FyCheckHotKeyStatus(FY_UP)) &&
 			(FyCheckHotKeyStatus(FY_D) || FyCheckHotKeyStatus(FY_RIGHT))) {
 			mix_dir(cam_fDir, act_fDir, UP_RIGHT);
-			actor.SetDirection(act_fDir, NULL);
+			if (mainC_can_turn)actor.SetDirection(act_fDir, NULL);
 		}
 		// up and left
 		else if ((FyCheckHotKeyStatus(FY_W) || FyCheckHotKeyStatus(FY_UP)) &&
 			(FyCheckHotKeyStatus(FY_A) || FyCheckHotKeyStatus(FY_LEFT))) {
 			mix_dir(cam_fDir, act_fDir, UP_LEFT);
-			actor.SetDirection(act_fDir, NULL);
+			if (mainC_can_turn)actor.SetDirection(act_fDir, NULL);
 		}
 		// down and right
 		else if ((FyCheckHotKeyStatus(FY_S) || FyCheckHotKeyStatus(FY_DOWN)) &&
 			(FyCheckHotKeyStatus(FY_D) || FyCheckHotKeyStatus(FY_RIGHT))) {
 			mix_dir(cam_fDir, act_fDir, DOWN_RIGHT);
-			actor.SetDirection(act_fDir, NULL);
+			if (mainC_can_turn)actor.SetDirection(act_fDir, NULL);
 		}
 		// down and left
 		else if ((FyCheckHotKeyStatus(FY_S) || FyCheckHotKeyStatus(FY_DOWN)) &&
 			(FyCheckHotKeyStatus(FY_A) || FyCheckHotKeyStatus(FY_LEFT))) {
 			mix_dir(cam_fDir, act_fDir, DOWN_LEFT);
-			actor.SetDirection(act_fDir, NULL);
+			if (mainC_can_turn)actor.SetDirection(act_fDir, NULL);
 		}
 
 
@@ -444,7 +472,6 @@ struct{
 		}*/
 	}
 	int Movement(BYTE code, BOOL4 value){
-		FnCharacter&actor=mainC;
 		int is_moving_code =
 			code == FY_UP || code == FY_W ||
 			code == FY_RIGHT || code == FY_D ||
@@ -457,34 +484,34 @@ struct{
 			FyCheckHotKeyStatus(FY_DOWN) || FyCheckHotKeyStatus(FY_S);
 		if (value) {
 			if (is_moving_code) {
-				if (curPoseID == idleID) {
-					curPoseID = runnID;
-					actor.SetCurrentAction(0, NULL, curPoseID, 5.0f);
-					actor.Play(START, 0.0f, FALSE, TRUE);
+				if (mainC.curpID == mainC.idleID) {
+					mainC.SetCurrentAction(0, NULL, mainC.curpID = mainC.runnID, 5.0f);
+					mainC.Play(START, 0.0f, FALSE, TRUE);
 				}
 			}
 			else if (code == FY_Z){
-				if (curPoseID != natkID){
-					curPoseID = natkID;
-					actor.SetCurrentAction(0, NULL, curPoseID, 5.0f);
-					actor.Play(START, 0.0f, FALSE, TRUE);
+				BOOL4 can_attk = mainC.curpID != mainC.attnID && mainC.curpID != mainC.dieeID;
+				if (can_attk){
+					mainC.SetCurrentAction(0, NULL, mainC.curpID = mainC.attnID, 5.0f);
+					mainC.Play(START, 0.0f, FALSE, TRUE);
 				}
 			}
 		}
 		else {
 			if (is_moving_code) {
-				if (curPoseID == runnID) {
+				if (mainC.curpID == mainC.runnID) {
 					if (has_moving_key == 0) {
-						curPoseID = idleID;
-						actor.SetCurrentAction(0, NULL, curPoseID, 5.0f);
-						actor.Play(START, 0.0f, FALSE, TRUE);
+						mainC.SetCurrentAction(0, NULL, mainC.curpID = mainC.idleID, 5.0f);
+						mainC.Play(START, 0.0f, FALSE, TRUE);
 					}
 				}
 			}
 			else if (code == FY_Z){
-				curPoseID = has_moving_key ? runnID : idleID;
-				actor.SetCurrentAction(0, NULL, curPoseID, 5.0f);
-				actor.Play(START, 0.0f, FALSE, TRUE);
+				BOOL4 can_unattk = mainC.curpID == mainC.attnID && mainC.curpID != mainC.dieeID;
+				if (can_unattk){
+					mainC.SetCurrentAction(0, NULL, mainC.curpID = (has_moving_key ? mainC.runnID : mainC.idleID), 5.0f);
+					mainC.Play(START, 0.0f, FALSE, TRUE);
+				}
 			}
 		}
 		if (is_end && code == FY_L && value)return 1;
@@ -512,12 +539,8 @@ struct{
 		}
 
 		if (frame / 10 * 10 == frame) {
-			float curTime;
-
-			curTime = FyTimerCheckTime(0);
-			sprintf(string, "Fps: %6.2f", frame / curTime);
+			sprintf(string, "Fps: %6.2f", frame / FyTimerCheckTime(0));
 		}
-
 		frame += skip;
 		if (frame >= 1000) {
 			frame = 0;
@@ -538,16 +561,24 @@ struct{
 		text.Write(uDiS, 20, 65, 255, 255, 0);
 
 		char tts[256];
-		if (is_end){
+		if (is_end == 2){
 			sprintf(tts, "MISSION COMPLETE");
 			text.Write(tts, 300, 400, 255, 255, 0);
 			sprintf(tts, "PRESS L TO CONTINUE");
 			text.Write(tts, 300, 415, 255, 255, 0);
 		}
+		else if (is_end == 1){
+			sprintf(tts, "MISSION FAILED");
+			text.Write(tts, 300, 400, 255, 255, 0);
+			sprintf(tts, "PRESS L TO CONTINUE");
+			text.Write(tts, 300, 415, 255, 255, 0);
+		}
 		else{
+			sprintf(tts, "mainC.aID = %d", mainC.aID);
+			text.Write(tts, 20, 95 + 15 * (-1), 255, 255, 0);
 			for (int i = 0; i < SZ(allBattleC); i++){
 				BattleC&battleC = *allBattleC[i];
-				sprintf(tts, "%s life = %d", battleC.name, battleC.life);
+				sprintf(tts, "%s life = %d, aid = %d", battleC.name, battleC.life, battleC.aID);
 				text.Write(tts, 20, 95 + 15 * i, 255, 255, 0);
 			}
 		}

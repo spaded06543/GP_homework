@@ -19,13 +19,13 @@ Body WarLord01
    Actions 5
       ActionData Idle SimpleAction Idle
       ActionData Run SimpleAction Run
-	  ActionData 2H_swing_mid_left SimpleAction 2H_swing_mid_left
+	  ActionData 2H_swing_mid_left SimpleAction swing_right
 	  ActionData Hit_from_front SimpleAction Hit_from_front
 	  ActionData Dying_A SimpleAction Dying_A
 
    DefaultAction 0 Idle
 
-   PoseNumber 45
+   PoseNumber 47
       Pose Idle 0 100 DefaultMotion
       Pose Use_object 101 141 DefaultMotion
       Pose anger 142 192 DefaultMotion
@@ -71,6 +71,8 @@ Body WarLord01
       Pose 2H_swing_mid_right 2309 2344 DefaultMotion
       Pose 2H_sword_swing_high_straight_down 2345 2380 DefaultMotion
       Pose 2H_sword_thrust_mid 2381 2416 DefaultMotion
+	  Pose swing_right 2119 2154 DefaultMotion
+	  Pose swing_right2 2117 2152 DefaultMotion
 }
 
 # Bone Data
