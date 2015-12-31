@@ -1,3 +1,4 @@
+#include "../Include/FlyWin32.h"
 struct{
 	VIEWPORTid vID;
 	SCENEid sID;

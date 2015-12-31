@@ -251,7 +251,11 @@ struct{
 				battleC.SetCurrentAction(0, NULL, battleC.curpID = battleC.attnID, 5.0f);
 				battleC.Play(START, 0.0f, FALSE, TRUE);
 			}
-			else if (rrr % 128 == 0 && battleC.curpID == battleC.attnID){
+			else if (rrr % (battleC.life + 10) < 20 && battleC.curpID == battleC.idleID){
+				battleC.SetCurrentAction(0, NULL, battleC.curpID = battleC.runnID, 5.0f);
+				battleC.Play(START, 0.0f, FALSE, TRUE);
+			}
+			else if (rrr % 128 == 0 && (battleC.curpID == battleC.attnID || battleC.curpID == battleC.runnID)){
 				battleC.SetCurrentAction(0, NULL, battleC.curpID = battleC.idleID, 5.0f);
 				battleC.Play(START, 0.0f, FALSE, TRUE);
 			}

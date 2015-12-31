@@ -19,6 +19,12 @@
 #include<map>
 #include<algorithm>
 #include<assert.h>
+// some globals
+int frame = 0;
+int oldX, oldY, oldXM, oldYM, oldXMM, oldYMM;
+#include "menumode.h"
+#include "selectmode.h"
+#include "fightmode.h"
 
 OBJECTid cID;
 int now_mode = 1;
@@ -26,14 +32,6 @@ int now_mode = 1;
 //2 select mode
 //3 load to fight mode
 //4 fight mode
-
-// some globals
-int frame = 0;
-int oldX, oldY, oldXM, oldYM, oldXMM, oldYMM;
-
-#include "menumode.cpp"
-#include "selectmode.cpp"
-#include "fightmode.cpp"
 
 // hotkey callbacks
 void QuitGame ( BYTE, BOOL4 );
