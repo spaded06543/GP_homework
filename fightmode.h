@@ -107,6 +107,12 @@ typedef struct BattleC : public FnCharacter {
 		dead_time = wudi_time = 0;
 		AItype = AItype_;
 	}
+	dou Cdis(BattleC&C2){
+		dot a_pos, b_pos;
+		GetPosition(&a_pos, NULL);
+		C2.GetPosition(&b_pos, NULL);
+		return my_dis(b_pos - a_pos);
+	}
 	void Nattack(BattleC&beatenC){
 		if (beatenC.life == 0 || beatenC.wudi_time != 0)return;
 		dot a_pos, b_pos, fDi;
@@ -131,6 +137,22 @@ typedef struct BattleC : public FnCharacter {
 		beatenC.Play(ONCE, 0.0f, FALSE, TRUE);
 		//increase wudi time
 		if (beatenC.life>0)beatenC.wudi_time += 34;
+	}
+	BOOL4 want_to_move(BattleC&targetC){
+		if (AItype == 0){
+			return
+				FyCheckHotKeyStatus(FY_UP) || FyCheckHotKeyStatus(FY_W) ||
+				FyCheckHotKeyStatus(FY_RIGHT) || FyCheckHotKeyStatus(FY_D) ||
+				FyCheckHotKeyStatus(FY_LEFT) || FyCheckHotKeyStatus(FY_A) ||
+				FyCheckHotKeyStatus(FY_DOWN) || FyCheckHotKeyStatus(FY_S);
+		}
+		return Cdis(targetC) >= 64 && rand() % (life + 1) < max(0, min(10, life + 1 - 10));
+	}
+	BOOL4 want_to_stop_move(BattleC&targetC){
+		if (AItype == 0){
+			return !want_to_move(targetC);
+		}
+		return Cdis(targetC) < 64 || rand() % 128 == 0;
 	}
 }BattleC;
 
@@ -247,18 +269,40 @@ struct{
 		for (BattleC* pointer : allBattleC)if (pointer->AItype == 1){
 			BattleC&battleC = *pointer;
 			int rrr = rand();
-			if (rrr % (battleC.life + 10) < 10 && battleC.curpID == battleC.idleID){
-				battleC.SetCurrentAction(0, NULL, battleC.curpID = battleC.attnID, 5.0f);
-				battleC.Play(START, 0.0f, FALSE, TRUE);
+			if (battleC.curpID == battleC.idleID){
+				rrr %= (battleC.life + 1);
+				if (rrr < 10){
+					battleC.SetCurrentAction(0, NULL, battleC.curpID = battleC.attnID, 5.0f);
+					battleC.Play(START, 0.0f, FALSE, TRUE);
+				}
+				else if (battleC.want_to_move(mainC)){
+					battleC.SetCurrentAction(0, NULL, battleC.curpID = battleC.runnID, 5.0f);
+					battleC.Play(START, 0.0f, FALSE, TRUE);
+				}
 			}
-			else if (rrr % (battleC.life + 10) < 20 && battleC.curpID == battleC.idleID){
-				battleC.SetCurrentAction(0, NULL, battleC.curpID = battleC.runnID, 5.0f);
-				battleC.Play(START, 0.0f, FALSE, TRUE);
-			}
-			else if (rrr % 128 == 0 && (battleC.curpID == battleC.attnID || battleC.curpID == battleC.runnID)){
+			else if (battleC.curpID == battleC.attnID){
+				if (!(rrr % 128 == 0))continue;
 				battleC.SetCurrentAction(0, NULL, battleC.curpID = battleC.idleID, 5.0f);
 				battleC.Play(START, 0.0f, FALSE, TRUE);
 			}
+			else if (battleC.curpID == battleC.runnID){
+				if (battleC.want_to_stop_move(mainC)){
+					battleC.SetCurrentAction(0, NULL, battleC.curpID = battleC.idleID, 5.0f);
+					battleC.Play(START, 0.0f, FALSE, TRUE);
+				}
+			}
+		}
+		//AI move
+		for (BattleC* pointer : allBattleC)if (pointer->AItype == 1 && pointer->curpID == pointer->runnID){
+			BattleC&battleC = *pointer;
+			BattleC&targetC = mainC;
+			dot a_pos, b_pos;
+			battleC.GetPosition(&a_pos);
+			targetC.GetPosition(&b_pos);
+			dot dd = b_pos - a_pos;
+			dou movedis = min(12.0f, my_dis(dd) - 15.0f);
+			battleC.SetDirection(&dd,NULL);
+			battleC.MoveForward(movedis, TRUE, FALSE, 0.0f, TRUE);
 		}
 		// play character pose
 		const int can_move_wudi_time = 10;
@@ -271,13 +315,8 @@ struct{
 			int old_wudi_time = battleC.wudi_time;
 			battleC.wudi_time = max(battleC.wudi_time - skip, 0);
 			if (old_wudi_time > can_move_wudi_time && battleC.wudi_time <= can_move_wudi_time && battleC.life > 0){
-				int want_to_move = pointer->AItype == 0 && (
-					FyCheckHotKeyStatus(FY_UP) || FyCheckHotKeyStatus(FY_W) ||
-					FyCheckHotKeyStatus(FY_RIGHT) || FyCheckHotKeyStatus(FY_D) ||
-					FyCheckHotKeyStatus(FY_LEFT) || FyCheckHotKeyStatus(FY_A) ||
-					FyCheckHotKeyStatus(FY_DOWN) || FyCheckHotKeyStatus(FY_S));
-
-				battleC.SetCurrentAction(NULL, 0, battleC.curpID = want_to_move ? battleC.runnID : battleC.idleID);
+				battleC.curpID = battleC.want_to_move(mainC) ? battleC.runnID : battleC.idleID;
+				battleC.SetCurrentAction(NULL, 0, battleC.curpID);
 				battleC.Play(START, 0.0f, FALSE, TRUE);
 			}
 		}
@@ -582,7 +621,7 @@ struct{
 			text.Write(tts, 20, 95 + 15 * (-1), 255, 255, 0);
 			for (int i = 0; i < SZ(allBattleC); i++){
 				BattleC&battleC = *allBattleC[i];
-				sprintf(tts, "%s life = %d, aid = %d", battleC.name, battleC.life, battleC.aID);
+				sprintf(tts, "%s life = %d, aid = %d, dis2main = %.3f", battleC.name, battleC.life, battleC.aID, battleC.Cdis(mainC));
 				text.Write(tts, 20, 95 + 15 * i, 255, 255, 0);
 			}
 		}
