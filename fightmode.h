@@ -482,7 +482,7 @@ struct{
 			}
 
 			// actor move
-			if (mainC_can_move)actor.MoveForward(12.0f, TRUE, FALSE, 0.0f, TRUE);
+			if (mainC_can_move)actor.MoveForward(6.0f, TRUE, FALSE, 0.0f, TRUE);
 			camera.GetPosition(cam_pos);
 			actor.GetPosition(act_pos);
 
@@ -503,7 +503,7 @@ struct{
 			}
 
 			// actor move
-			if (mainC_can_move)actor.MoveForward(12.0f, TRUE, FALSE, 0.0f, TRUE);
+			if (mainC_can_move)actor.MoveForward(6.0f, TRUE, FALSE, 0.0f, TRUE);
 			camera.GetPosition(cam_pos);
 			actor.GetPosition(act_pos);
 
@@ -572,6 +572,24 @@ struct{
 			cam_fDir[1] = act_pos[1] - cam_pos[1];
 			set_cam_dir(cam_fDir, cam_uDir);
 			camera.SetDirection(cam_fDir, cam_uDir);
+		}
+
+		if ( !(FyCheckHotKeyStatus(FY_D) || FyCheckHotKeyStatus(FY_RIGHT) || FyCheckHotKeyStatus(FY_A) || FyCheckHotKeyStatus(FY_LEFT) ) ) {
+			if (mainC_can_move)actor.MoveForward(6.0f, TRUE, FALSE, 0.0f, TRUE);
+			camera.GetPosition(cam_pos);
+			actor.GetPosition(act_pos);
+			
+			// if too far, camera foward
+			if (distance(cam_pos, act_pos) > dis) {
+				set_cam_pos(cam_pos, act_pos, cam_fDir);
+				camera.SetPosition(cam_pos);
+			}
+
+			// if too close, camera backward
+			else if (distance(cam_pos, act_pos) < dis) {
+				set_cam_pos(cam_pos, act_pos, cam_fDir);
+				camera.SetPosition(cam_pos);
+			}
 		}
 
 
