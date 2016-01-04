@@ -575,20 +575,22 @@ struct{
 		}
 
 		if ( !(FyCheckHotKeyStatus(FY_D) || FyCheckHotKeyStatus(FY_RIGHT) || FyCheckHotKeyStatus(FY_A) || FyCheckHotKeyStatus(FY_LEFT) ) ) {
-			if (mainC_can_move)actor.MoveForward(6.0f, TRUE, FALSE, 0.0f, TRUE);
-			camera.GetPosition(cam_pos);
-			actor.GetPosition(act_pos);
-			
-			// if too far, camera foward
-			if (distance(cam_pos, act_pos) > dis) {
-				set_cam_pos(cam_pos, act_pos, cam_fDir);
-				camera.SetPosition(cam_pos);
-			}
-
-			// if too close, camera backward
-			else if (distance(cam_pos, act_pos) < dis) {
-				set_cam_pos(cam_pos, act_pos, cam_fDir);
-				camera.SetPosition(cam_pos);
+			if (FyCheckHotKeyStatus(FY_W) || FyCheckHotKeyStatus(FY_UP) || FyCheckHotKeyStatus(FY_S) || FyCheckHotKeyStatus(FY_DOWN) ) {
+				if (mainC_can_move)actor.MoveForward(6.0f, TRUE, FALSE, 0.0f, TRUE);
+				camera.GetPosition(cam_pos);
+				actor.GetPosition(act_pos);
+				
+				// if too far, camera foward
+				if (distance(cam_pos, act_pos) > dis) {
+					set_cam_pos(cam_pos, act_pos, cam_fDir);
+					camera.SetPosition(cam_pos);
+				}
+	
+				// if too close, camera backward
+				else if (distance(cam_pos, act_pos) < dis) {
+					set_cam_pos(cam_pos, act_pos, cam_fDir);
+					camera.SetPosition(cam_pos);
+				}
 			}
 		}
 
