@@ -66,7 +66,7 @@ struct HumanCC : public BattleC {
 			}
 
 			// actor move
-			if (can_move)actor.MoveForward(6.0f, TRUE, FALSE, 0.0f, TRUE);
+			if (can_move)actor.MoveForward(allBattleC[0]->speed, TRUE, FALSE, 0.0f, TRUE);
 			camera.GetPosition(cam_pos);
 			actor.GetPosition(act_pos);
 
@@ -87,7 +87,7 @@ struct HumanCC : public BattleC {
 			}
 
 			// actor move
-			if (can_move)actor.MoveForward(6.0f, TRUE, FALSE, 0.0f, TRUE);
+			if (can_move)actor.MoveForward(allBattleC[0]->speed, TRUE, FALSE, 0.0f, TRUE);
 			camera.GetPosition(cam_pos);
 			actor.GetPosition(act_pos);
 
@@ -115,7 +115,7 @@ struct HumanCC : public BattleC {
 					float Dir[3] = { 0.0f, 0.0f, 1.0f };
 					camera.SetDirection(NULL, Dir);
 					camera.TurnRight(-90.0f + THETA);
-					camera.MoveForward(12.0f, TRUE, FALSE, 0.0f, TRUE);
+					camera.MoveForward(2*allBattleC[0]->speed, TRUE, FALSE, 0.0f, TRUE);
 				}
 			}
 
@@ -145,7 +145,7 @@ struct HumanCC : public BattleC {
 					float Dir[3] = { 0.0f, 0.0f, 1.0f };
 					camera.SetDirection(NULL, Dir);
 					camera.TurnRight(90.0f - THETA);
-					camera.MoveForward(12.0f, TRUE, FALSE, 0.0f, TRUE);
+					camera.MoveForward(2*allBattleC[0]->speed, TRUE, FALSE, 0.0f, TRUE);
 				}
 			}
 
@@ -160,7 +160,7 @@ struct HumanCC : public BattleC {
 
 		if (!(FyCheckHotKeyStatus(FY_D) || FyCheckHotKeyStatus(FY_RIGHT) || FyCheckHotKeyStatus(FY_A) || FyCheckHotKeyStatus(FY_LEFT))) {
 			if (FyCheckHotKeyStatus(FY_W) || FyCheckHotKeyStatus(FY_UP) || FyCheckHotKeyStatus(FY_S) || FyCheckHotKeyStatus(FY_DOWN)) {
-				if (can_move)actor.MoveForward(6.0f, TRUE, FALSE, 0.0f, TRUE);
+				if (can_move)actor.MoveForward(allBattleC[0]->speed, TRUE, FALSE, 0.0f, TRUE);
 				camera.GetPosition(cam_pos);
 				actor.GetPosition(act_pos);
 
