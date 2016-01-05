@@ -1,4 +1,6 @@
 #include<cmath>
+#define SZ(x) (int)(x).size()
+#define ALL(x) (x).begin(),(x).end()
 using namespace std;
 typedef long long int lnt;
 typedef float dou;
@@ -33,6 +35,7 @@ dot operator*(dot a,dot b){
 }
 dou operator%(dot a,dot b){return a.x*b.x+a.y*b.y+a.z*b.z;}
 dou my_dis(dot a){return sqrt(a % a);}
+dou atan2D(dot a){return atan2(a.y, a.x);}
 dot dan(dot a){return a / my_dis(a);}
 
 /////////////////////////////////////////
