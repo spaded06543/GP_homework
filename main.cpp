@@ -69,10 +69,6 @@ void FyMain ( int argc, char **argv )
   FyDefineHotKey ( FY_RIGHT, Movement, FALSE );   // Right for turning right
   FyDefineHotKey ( FY_LEFT, Movement, FALSE );    // Left for turning left
   FyDefineHotKey ( FY_DOWN, Movement, FALSE );    // Down for moving backward
-  FyDefineHotKey ( FY_W, Movement, FALSE );       // same as Up
-  FyDefineHotKey ( FY_D, Movement, FALSE );	      // same as Right
-  FyDefineHotKey ( FY_A, Movement, FALSE );	      // same as Left
-  FyDefineHotKey ( FY_S, Movement, FALSE );	      // same as Down
   FyDefineHotKey ( FY_Z, Movement, FALSE );	      // normal attack
   FyDefineHotKey ( FY_L, Movement, FALSE );	      // something
 
