@@ -4,9 +4,8 @@
 #define FPS 30.0f                 // frame per sec
 #define EPSILON 0.0001f           // mis-accuraccy
 
-#define DISTANCE_P 1000.0f        // default dis between (projection of cam on xy plane) & act
-#define DEFAULT_HEIGHT 140.0f     // default cam height
-#define DISTANCE sqrt ( DISTANCE_P*DISTANCE_P + DEFAULT_HEIGHT*DEFAULT_HEIGHT )
+#define DISTANCE_P 750.0f        // default dis between (projection of cam on xy plane) & act
+#define DEFAULT_HEIGHT 105.0f     // default cam height
 #define DEFAULT_DEGREE 4.7f       // default cam look down degree
 
 #define ACT_DEGREEperFRAME 0.25f  // act turned degree per frame
@@ -24,8 +23,12 @@
 #define DOWN_RIGHT  2
 #define DOWN_LEFT   3
 
-float dis = DISTANCE;
+#define DEFAULT   1
+#define ELSE      0
+
+float dis = sqrt(DISTANCE_P*DISTANCE_P + DEFAULT_HEIGHT*DEFAULT_HEIGHT);
 float height = DEFAULT_HEIGHT;
+float dis_p = DISTANCE_P;
 float THETA = ACT_DEGREEperFRAME;
 float PHI = CAMUPDEGREE;
 float cam_angle = DEFAULT_DEGREE;
@@ -67,29 +70,42 @@ void set_act_dir ( float *cam_fDir, float *act_fDir, int direction = UP )
   }
 }
 
-void set_cam_dir ( float *fDir, float *uDir )
+void set_cam_dir ( float *fDir, float *uDir, int control = ELSE )
 {
-  float d = sqrt ( fDir[0] * fDir[0] + fDir[1] * fDir[1] );
-  float Dir[3] = { fDir[0] / d, fDir[1] / d, 0 };
-
-  fDir[2] = -sin ( degree2rad ( cam_angle ) );
-  uDir[2] =  cos ( degree2rad ( cam_angle ) );
-
-  float fc = sqrt ( 1 - fDir[2] * fDir[2] ),
-        uc = sqrt ( 1 - uDir[2] * uDir[2] );
-
-  uDir[0] = Dir[0] * uc;
-  uDir[1] = Dir[1] * uc;
-
-  fDir[0] = Dir[0] * fc;
-  fDir[1] = Dir[1] * fc;
+  if ( control == DEFAULT ) {
+    float d = sqrt ( fDir[0] * fDir[0] + fDir[1] * fDir[1] );
+    float Dir[3] = { fDir[0] / d, fDir[1] / d, 0 };
+  
+    fDir[2] = -sin ( degree2rad ( cam_angle ) );
+    uDir[2] =  cos ( degree2rad ( cam_angle ) );
+  
+    float fc = sqrt ( 1 - fDir[2] * fDir[2] ),
+          uc = sqrt ( 1 - uDir[2] * uDir[2] );
+  
+    uDir[0] = Dir[0] * uc;
+    uDir[1] = Dir[1] * uc;
+  
+    fDir[0] = Dir[0] * fc;
+    fDir[1] = Dir[1] * fc;
+  }
+  else {
+    float d = sqrt ( fDir[0] * fDir[0] + fDir[1] * fDir[1] + fDir[2] * fDir[2] );
+    fDir[0] /= d;
+    fDir[1] /= d;
+    fDir[2] /= d;
+  
+    d = sqrt ( fDir[2]*fDir[2] / (fDir[0]*fDir[0] + fDir[1]*fDir[1]) );
+    uDir[0] = fDir[0] * d;
+    uDir[1] = fDir[1] * d;
+    uDir[2] = sqrt ( fDir[0]*fDir[0] + fDir[1]*fDir[1] );
+  }
 }
 
 void set_cam_pos ( float *cam_pos, float *act_pos, float *cam_fDir )
 {
   float d = sqrt ( 1 - cam_fDir[2] * cam_fDir[2] );
-  cam_pos[0] = act_pos[0] - DISTANCE_P * cam_fDir[0] / d;
-  cam_pos[1] = act_pos[1] - DISTANCE_P * cam_fDir[1] / d;
+  cam_pos[0] = act_pos[0] - dis_p * cam_fDir[0] / d;
+  cam_pos[1] = act_pos[1] - dis_p * cam_fDir[1] / d;
   cam_pos[2] = height;
 }
 
