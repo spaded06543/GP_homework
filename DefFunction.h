@@ -4,7 +4,7 @@
 #define FPS 30.0f                 // frame per sec
 #define EPSILON 0.0001f           // mis-accuraccy
 
-#define DISTANCE_P 750.0f        // default dis between (projection of cam on xy plane) & act
+#define DISTANCE_P 750.0f         // default dis between (projection of cam on xy plane) & act
 #define DEFAULT_HEIGHT 105.0f     // default cam height
 #define DEFAULT_DEGREE 4.7f       // default cam look down degree
 

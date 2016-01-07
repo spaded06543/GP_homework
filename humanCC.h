@@ -109,6 +109,7 @@ struct HumanCC : public BattleC {
 					camera.SetDirection(act_fDir, act_uDir);
 					camera.MoveForward(Speed, TRUE, FALSE, 0.0f, TRUE);
 
+					// if camera move out from terrain
 					camera.GetPosition(cam_pos);
 					float dir[3] = { 0.0f, 0.0f, -1.0f };
 					if ( terrain.HitTest ( cam_pos, dir ) <= 0 ) {
@@ -123,27 +124,8 @@ struct HumanCC : public BattleC {
 					}
 					else
 						camera.SetDirection(cam_fDir, cam_uDir);
-
-
-
-
-					
-
 				}
 			}
-/*
-			// if too close, camera backward
-			actor.GetPosition(act_pos);
-			
-			float dir[3] = { 0.0f, 0.0f, -1.0f };
-			if ( terrain.HitTest ( cam_pos, dir ) <= 0 ) {
-				dis_p -= Speed;
-				height = sqrt ( dis*dis - dis_p*dis_p );
-				cam_pos[2] = height;
-			}
-
-			camera.SetPosition(cam_pos);
-*/
 		}
 
 		// ***** Right *****
@@ -164,16 +146,16 @@ struct HumanCC : public BattleC {
 					camera.TurnRight(-90.0f + THETA);
 					camera.MoveForward(Speed, TRUE, FALSE, 0.0f, TRUE);
 				}
-			}
 
-			// camera facing actor
-			actor.GetPosition(act_pos);
-			camera.GetPosition(cam_pos);
-			cam_fDir[0] = act_pos[0] - cam_pos[0];
-			cam_fDir[1] = act_pos[1] - cam_pos[1];
-			cam_fDir[2] = act_pos[2] - cam_pos[2]+42.946793;
-			set_cam_dir(cam_fDir, cam_uDir);
-			camera.SetDirection(cam_fDir, cam_uDir);
+				// camera facing actor
+				actor.GetPosition(act_pos);
+				camera.GetPosition(cam_pos);
+				cam_fDir[0] = act_pos[0] - cam_pos[0];
+				cam_fDir[1] = act_pos[1] - cam_pos[1];
+				cam_fDir[2] = act_pos[2] - cam_pos[2]+42.946793;
+				set_cam_dir(cam_fDir, cam_uDir);
+				camera.SetDirection(cam_fDir, cam_uDir);
+			}
 		}
 
 		// ***** Left *****
@@ -194,16 +176,16 @@ struct HumanCC : public BattleC {
 					camera.TurnRight(90.0f - THETA);
 					camera.MoveForward(Speed, TRUE, FALSE, 0.0f, TRUE);
 				}
-			}
 
-			// camera facing actor
-			actor.GetPosition(act_pos);
-			camera.GetPosition(cam_pos);
-			cam_fDir[0] = act_pos[0] - cam_pos[0];
-			cam_fDir[1] = act_pos[1] - cam_pos[1];
-			cam_fDir[2] = act_pos[2] - cam_pos[2]+42.946793;
-			set_cam_dir(cam_fDir, cam_uDir);
-			camera.SetDirection(cam_fDir, cam_uDir);
+				// camera facing actor
+				actor.GetPosition(act_pos);
+				camera.GetPosition(cam_pos);
+				cam_fDir[0] = act_pos[0] - cam_pos[0];
+				cam_fDir[1] = act_pos[1] - cam_pos[1];
+				cam_fDir[2] = act_pos[2] - cam_pos[2]+42.946793;
+				set_cam_dir(cam_fDir, cam_uDir);
+				camera.SetDirection(cam_fDir, cam_uDir);
+			}
 		}
 
 
