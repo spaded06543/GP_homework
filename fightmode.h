@@ -45,12 +45,12 @@ struct{
 		FnScene scene; scene.ID(sID);
 		cID = scene.CreateObject(CAMERA);
 		// load the scene
-		FM.Renderload("NOW loading...  10\% Scene"); FySwapBuffers();
+		FM.Renderload("NOW loading...  10% Scene"); FySwapBuffers();
 		scene.Load("gameScene02");
 		scene.SetAmbientLights(1.0f, 1.0f, 1.0f, 0.6f, 0.6f, 0.6f);
 
 		// load the terrain
-		FM.Renderload("NOW loading...  20\% terrain"); FySwapBuffers();
+		FM.Renderload("NOW loading...  20% terrain"); FySwapBuffers();
 		tID = scene.CreateObject(OBJECT);
 		FnObject terrain;
 		terrain.ID(tID);
@@ -64,7 +64,7 @@ struct{
 		room.AddObject(tID);
 
 		// load the character
-		FM.Renderload("NOW loading...  30\% characters"); FySwapBuffers();
+		FM.Renderload("NOW loading...  30% characters"); FySwapBuffers();
 		allBattleC.clear();
 		const int DN = TYPESOFC, RN = DN - 2 + (string(p1) == p2);
 		//load all
@@ -83,7 +83,7 @@ struct{
 			donzos[i] = SimpleC(cname[i-DN].c_str(), sID, tRID, pos, fDi, uDi, 0);
 			allBattleC.push_back(&donzos[i]);
 		}
-		FM.Renderload("NOW loading...  40\% main characters"); FySwapBuffers();
+		FM.Renderload("NOW loading...  40% main characters"); FySwapBuffers();
 		//load 2P
 		{
 			dot fDi = dot(0, 1, 0);
@@ -102,7 +102,7 @@ struct{
 			cID = mainC.cID;
 		}
 		// lighting
-		FM.Renderload("NOW loading...  50\% light"); FySwapBuffers();
+		FM.Renderload("NOW loading...  50% light"); FySwapBuffers();
 		dot mainLightPos = dot( -4579,   -714,   15530);
 		dot mainLightFDi = dot(0.276f,   0.0f, -0.961f);
 		dot mainLightUDi = dot(0.961f, 0.026f,  0.276f);
@@ -115,7 +115,7 @@ struct{
 		lgt.SetColor(1.0f, 1.0f, 1.0f);
 		lgt.SetName("MainLight");
 		lgt.SetIntensity(0.4f);
-		FM.Renderload("NOW loading... 100\%"); FySwapBuffers();
+		FM.Renderload("NOW loading... 100%"); FySwapBuffers();
 	}
 	void GameAI(int skip){
 		// update timer
@@ -176,11 +176,7 @@ struct{
 		}
 	}
 	int Movement(BYTE code, BOOL4 value){
-		int is_moving_code =
-			code == FY_UP || code == FY_W ||
-			code == FY_RIGHT || code == FY_D ||
-			code == FY_LEFT || code == FY_A ||
-			code == FY_DOWN || code == FY_S;
+		int is_moving_code = code == FY_UP || code == FY_RIGHT || code == FY_LEFT || code == FY_DOWN;
 		if (value) {
 			if (is_moving_code) {
 				if (mainC.curpID == mainC.idleID) {
@@ -192,6 +188,13 @@ struct{
 				BOOL4 can_attk = mainC.curpID != mainC.attnID && mainC.curpID != mainC.dieeID;
 				if (can_attk){
 					mainC.SetCurrentAction(0, NULL, mainC.curpID = mainC.attnID, 5.0f);
+					mainC.Play(START, 0.0f, FALSE, TRUE);
+				}
+			}
+			else if (code == FY_X){
+				BOOL4 can_aimm = mainC.curpID != mainC.attnID && mainC.curpID != mainC.dieeID;
+				if (can_aimm){
+					mainC.SetCurrentAction(0, NULL, mainC.curpID = mainC.aimmID, 5.0f);
 					mainC.Play(START, 0.0f, FALSE, TRUE);
 				}
 			}
@@ -207,6 +210,18 @@ struct{
 			}
 			else if (code == FY_Z){
 				if (mainC.curpID == mainC.attnID){
+					if (FyCheckHotKeyStatus(FY_X)){
+						mainC.curpID = mainC.aimmID;
+					}
+					else{
+						mainC.curpID = (mainC.want_to_move() ? mainC.runnID : mainC.idleID);
+					}
+					mainC.SetCurrentAction(0, NULL, mainC.curpID, 5.0f);
+					mainC.Play(START, 0.0f, FALSE, TRUE);
+				}
+			}
+			else if (code == FY_X){
+				if (mainC.curpID == mainC.aimmID){
 					mainC.SetCurrentAction(0, NULL, mainC.curpID = (mainC.want_to_move() ? mainC.runnID : mainC.idleID), 5.0f);
 					mainC.Play(START, 0.0f, FALSE, TRUE);
 				}

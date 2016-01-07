@@ -1,0 +1,399 @@
+# Character File
+# Created by Fly v2.0
+#
+Actor v 1.0
+
+Character Robber02
+
+Channels 1
+
+BaseScale 1.000000
+
+# Body Data
+Bodies 1
+
+Body Robber_02
+{
+   Parent Root
+   RootBone Bip01
+   Actions 11
+      ActionData Idle SimpleAction COMBATIDEL
+      ActionData CombatIdle SimpleAction COMBATIDEL
+      ActionData MoveRight SimpleAction RSHIFT
+      ActionData MoveLeft SimpleAction LSHIFT
+      ActionData NormalAttack1 SimpleAction LIGHTATK01
+      ActionData NormalAttack2 SimpleAction LIGHTATK02
+      ActionData HeavyAttack1 SimpleAction HEAVYATK
+      ActionData Damage1 SimpleAction DAMAGED01
+      ActionData Damage2 SimpleAction DAMAGED02
+      ActionData Run SimpleAction RUN
+      ActionData Dead SimpleAction DEAD
+
+   DefaultAction 0 CombatIdle
+
+   PoseNumber 11
+      Pose TPOSE 0 9 DefaultMotion
+      Pose COMBATIDEL 10 50 DefaultMotion
+      Pose RSHIFT 60 100 DefaultMotion
+      Pose LSHIFT 105 145 DefaultMotion
+      Pose LIGHTATK01 160 195 DefaultMotion
+      Pose LIGHTATK02 200 225 DefaultMotion
+      Pose HEAVYATK 230 260 DefaultMotion
+      Pose DAMAGED01 265 280 DefaultMotion
+      Pose DAMAGED02 285 310 DefaultMotion
+      Pose DEAD 315 346 DefaultMotion
+      Pose RUN 359 380 DefaultMotion
+}
+
+# Bone Data
+Bones 70
+
+Bone Bip01
+{
+   BoneType Animation
+}
+
+Bone Bip01_Footsteps
+{
+   BoneType Animation
+}
+
+Bone Bip01_Pelvis
+{
+   BoneType Animation
+}
+
+Bone Bip01_Spine
+{
+   BoneType Animation
+}
+
+Bone Bip01_Spine1
+{
+   BoneType Animation
+}
+
+Bone Bip01_Neck
+{
+   BoneType Animation
+}
+
+Bone Bip01_Head
+{
+   BoneType Animation
+}
+
+Bone Bip01_HeadNub
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_Clavicle
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_UpperArm
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_Forearm
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_Hand
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_Finger0
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_Finger01
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_Finger02
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_Finger0Nub
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_Finger1
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_Finger11
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_Finger12
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_Finger1Nub
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_Finger2
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_Finger21
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_Finger22
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_Finger2Nub
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_Finger3
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_Finger31
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_Finger32
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_Finger3Nub
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_Finger4
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_Finger41
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_Finger42
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_Finger4Nub
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_ForeTwist
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_Clavicle
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_UpperArm
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_Forearm
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_Hand
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_Finger0
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_Finger01
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_Finger02
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_Finger0Nub
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_Finger1
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_Finger11
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_Finger12
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_Finger1Nub
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_Finger2
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_Finger21
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_Finger22
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_Finger2Nub
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_Finger3
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_Finger31
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_Finger32
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_Finger3Nub
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_Finger4
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_Finger41
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_Finger42
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_Finger4Nub
+{
+   BoneType Animation
+}
+
+Bone Weapon01
+{
+   BoneType Animation
+}
+
+Bone Weapon02
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_ForeTwist
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_Thigh
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_Calf
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_Foot
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_Toe0
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_Toe0Nub
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_Thigh
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_Calf
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_Foot
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_Toe0
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_Toe0Nub
+{
+   BoneType Animation
+}

@@ -28,7 +28,7 @@ char sAttN[TYPESOFC][64] = {
 char sIdle[TYPESOFC][64] = {
 	"Idle",
 	"Idle",
-	"CombatIdle",
+	"Idle",
 	"Idle",
 	"Idle",
 	"Idle"
@@ -56,6 +56,14 @@ char sDiee[TYPESOFC][64] = {
 	"Dying_A",
 	"Dying_A",
 	"Dying_A"
+};
+char sAimm[TYPESOFC][64] = {
+	"CombatIdle",
+	"CombatIdle",
+	"CombatIdle",
+	"CombatIdle",
+	"CombatIdle",
+	"CombatIdle"
 };
 struct cas{
 	int life;
@@ -88,7 +96,7 @@ struct BattleC : public FnCharacter {
 	int dead_time, wudi_time, play_time;
 	char name[20];
 	CHARACTERid aID;
-	ACTIONid attnID, idleID, runnID, damnID, dieeID, curpID;  // those actions
+	ACTIONid attnID, idleID, runnID, damnID, dieeID, curpID, aimmID;  // those actions
 	int AItype;//0 human, 1 random
 	int group;
 	BattleC(){}
@@ -118,6 +126,7 @@ struct BattleC : public FnCharacter {
 		runnID = GetBodyAction(NULL, sRunn[cid]);
 		damnID = GetBodyAction(NULL, sDamN[cid]);
 		dieeID = GetBodyAction(NULL, sDiee[cid]);
+		aimmID = GetBodyAction(NULL, sAimm[cid]);
 		curpID = idleID;
 		SetCurrentAction(NULL, 0, idleID);
 		Play(START, 0.0f, FALSE, TRUE);
@@ -131,11 +140,14 @@ struct BattleC : public FnCharacter {
 		group = group_;
 		AItype = AItype_;
 	}
-	dou Cdis(BattleC&C2){
+	dot Cdvc(BattleC&C2){
 		dot a_pos, b_pos;
 		GetPosition(&a_pos, NULL);
 		C2.GetPosition(&b_pos, NULL);
-		return my_dis(b_pos - a_pos);
+		return b_pos - a_pos;
+	}
+	dou Cdis(BattleC&C2){
+		return my_dis(Cdvc(C2));
 	}
 	void Nattack(BattleC&beatenC){
 		if (beatenC.life == 0 || beatenC.wudi_time != 0 || beatenC.group == group)return;
@@ -169,6 +181,24 @@ struct BattleC : public FnCharacter {
 		for (; st != ed; st++)if ((*st)->group != group && (*st)->life){
 			if (ans == NULL || Cdis(*ans) > Cdis(*(*st))){
 				ans = *st;
+			}
+		}
+		return ans;
+	}
+	template<class T>
+	BattleC* find_face_target(T st, T ed){
+		BattleC*ans = NULL; dou warc;
+		dot fDi;
+		GetDirection(&fDi,NULL);
+		for (; st != ed; st++)if ((*st)->life){
+			dot dvc = Cdvc(*(*st));
+			if (my_dis(dvc) < eps || my_dis(dvc) >= attnR || fDi % dvc < 0)continue;
+			dou sint = my_dis(fDi*dan(dvc));
+			dou narc = fabs(asin(sint));
+			if (narc >= attnT)continue;
+			if (ans == NULL|| warc>narc){
+				ans = *st;
+				warc = narc;
 			}
 		}
 		return ans;

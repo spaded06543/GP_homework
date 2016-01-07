@@ -1,0 +1,289 @@
+# Character File
+# Created by Fly v2.0
+#
+Actor v 1.0
+
+Character Footman01
+
+Channels 1
+
+BaseScale 0.400000
+
+# Body Data
+Bodies 1
+
+Body Footman01
+{
+   Parent Root
+   RootBone Bip01
+   Actions 6
+      ActionData Idle SimpleAction Idle
+	  ActionData CombatIdle SimpleAction 1H_combat_mode
+      ActionData Run SimpleAction Run
+	  ActionData 1H_swing_left SimpleAction 1H_swing_left
+	  ActionData Hit_from_front SimpleAction Hit_from_front
+	  ActionData Dying_A SimpleAction Dying_A
+
+   DefaultAction 0 Idle
+
+   PoseNumber 46
+      Pose Idle 0 100 DefaultMotion
+      Pose Use_object 101 141 DefaultMotion
+      Pose anger 142 192 DefaultMotion
+      Pose Drinking 193 293 DefaultMotion
+      Pose Hit_from_back 296 331 DefaultMotion
+      Pose Hit_from_front 332 367 DefaultMotion
+      Pose Looking_around 370 546 DefaultMotion
+      Pose pointing_A 547 607 DefaultMotion
+      Pose salute 608 668 DefaultMotion
+      Pose Talking 669 714 DefaultMotion
+      Pose thinking 715 790 DefaultMotion
+      Pose Tracking 791 966 DefaultMotion
+      Pose sit_down 967 993 DefaultMotion
+      Pose sitting 994 1094 DefaultMotion
+      Pose came_up 1095 1121 DefaultMotion
+      Pose Going_asleep 1122 1192 DefaultMotion
+      Pose sleeping 1193 1268 DefaultMotion
+      Pose waking_up 1269 1334 DefaultMotion
+      Pose walking_back 1337 1372 DefaultMotion
+      Pose Climbing_ladder 1375 1405 DefaultMotion
+      Pose Crouching 1408 1508 DefaultMotion
+      Pose falling_down 1511 1551 DefaultMotion
+      Pose Moving_left 1554 1574 DefaultMotion
+      Pose Moving_right 1575 1595 DefaultMotion
+      Pose Sneaking 1598 1648 DefaultMotion
+      Pose Run 1651 1673 DefaultMotion
+      Pose Jump_runing 1676 1716 DefaultMotion
+      Pose Dying_A 1719 1784 DefaultMotion
+      Pose Dying_B 1787 1827 DefaultMotion
+      Pose 1H_combat_mode 1830 1880 DefaultMotion
+      Pose 1H_dodge_backwards 1881 1916 DefaultMotion
+      Pose 1H_dodge_to_left 1917 1952 DefaultMotion
+      Pose 1H_dodge_to_right 1953 1988 DefaultMotion
+      Pose 1H_duck_below_high_swing 1989 2024 DefaultMotion
+      Pose 1H_parry_A 2025 2060 DefaultMotion
+      Pose 1H_parry_B 2061 2096 DefaultMotion
+      Pose 1H_parry_from_stright_down 2097 2132 DefaultMotion
+      Pose 1H_shield_block 2133 2168 DefaultMotion
+      Pose 1H_shield_blow 2169 2204 DefaultMotion
+      Pose 1H_swing_high_straight_down 2205 2240 DefaultMotion
+      Pose 1H_swing_left 2241 2276 DefaultMotion
+      Pose 1H_swing_right 2277 2312 DefaultMotion
+      Pose 1H_thrust 2313 2348 DefaultMotion
+      Pose 1H_banging_shield 2349 2369 DefaultMotion
+      Pose 1H_charging 2372 2394 DefaultMotion
+      Pose 1H_walk 2397 2432 DefaultMotion
+}
+
+# Bone Data
+Bones 42
+
+Bone Bip01
+{
+   BoneType Animation
+}
+
+Bone Bip01_Pelvis
+{
+   BoneType Animation
+}
+
+Bone Bip01_Spine
+{
+   BoneType Animation
+}
+
+Bone Bip01_Spine1
+{
+   BoneType Animation
+}
+
+Bone Bip01_Spine2
+{
+   BoneType Animation
+}
+
+Bone Bip01_Neck
+{
+   BoneType Animation
+}
+
+Bone Bip01_Neck1
+{
+   BoneType Animation
+}
+
+Bone Bip01_Head
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_Clavicle
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_UpperArm
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_Forearm
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_Hand
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_Finger0
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_Finger01
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_Finger02
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_Finger1
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_Finger11
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_Finger12
+{
+   BoneType Animation
+}
+
+Bone Bip01_shield_mount
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_Clavicle
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_UpperArm
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_Forearm
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_Hand
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_Finger0
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_Finger01
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_Finger02
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_Finger1
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_Finger11
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_Finger12
+{
+   BoneType Animation
+}
+
+Bone Bip01_Rhand_Weapon
+{
+   BoneType Animation
+}
+
+Bone Bip01_back_right_Wmount
+{
+   BoneType Animation
+}
+
+Bone Skeleton_footman_sword
+{
+   BoneType Animation
+}
+
+Bone Bip01_back_shield_mount
+{
+   BoneType Animation
+}
+
+Bone Skeleton_footman_shield
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_Thigh
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_Calf
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_Foot
+{
+   BoneType Animation
+}
+
+Bone Bip01_L_Toe0
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_Thigh
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_Calf
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_Foot
+{
+   BoneType Animation
+}
+
+Bone Bip01_R_Toe0
+{
+   BoneType Animation
+}

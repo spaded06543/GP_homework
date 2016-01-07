@@ -78,7 +78,7 @@ struct SimpleC : public BattleC {
 		else {
 			GetDirection(&b_pos,NULL);
 			dou theta = dou(atan2D(b_pos) + ((rand() % 8) - 4) / 180.0 * pi);
-			b_pos = a_pos + 32 * dot(cos(theta), sin(theta), 0);
+			b_pos = a_pos + 2 * speed * dot(cos(theta), sin(theta), 0);
 		}
 		dot dd = b_pos - a_pos;
 		dou movedis = (curpID == runnID) * min(speed, my_dis(dd) / 2 - 15.0f);

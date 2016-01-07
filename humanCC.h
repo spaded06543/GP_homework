@@ -36,8 +36,18 @@ struct HumanCC : public BattleC {
 		}
 	}
 	void gen_mov(vector<BattleC*>&allBattleC, OBJECTid tID){
-		BOOL4 can_move = curpID != dieeID && curpID != damnID && curpID != attnID;
+		BOOL4 can_move = curpID != dieeID && curpID != damnID && curpID != attnID && curpID != aimmID;
 		BOOL4 can_turn = curpID != dieeID && curpID != damnID;
+		if (curpID == aimmID){
+			BattleC*target = find_face_target(ALL(allBattleC));
+			if (target != NULL){
+				dot dvc = Cdvc(*target);
+				SetDirection(&dvc, NULL);
+			}
+			else{
+				can_turn = 1;
+			}
+		}
 		FnCharacter&actor = *this;
 		// get camera object
 		FnCamera camera; camera.ID(cID);
