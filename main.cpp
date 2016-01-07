@@ -23,15 +23,17 @@
 int frame = 0;
 int oldX, oldY, oldXM, oldYM, oldXMM, oldYMM;
 #include "menumode.h"
+#include "optionmode.h"
 #include "selectmode.h"
 #include "fightmode.h"
 
 OBJECTid cID;
 int now_mode = 1;
 //1 menu mode
-//2 select mode
-//3 load to fight mode
-//4 fight mode
+//2 option mode
+//3 select mode
+//4 load to fight mode
+//5 fight mode
 
 // hotkey callbacks
 void QuitGame ( BYTE, BOOL4 );
@@ -60,8 +62,9 @@ void FyMain ( int argc, char **argv )
   BOOL4 beOK = FyStartFlyWin32 ( "NTU@2014 Homework #01 - Use Fly2", 0, 0, 800, 600, FALSE );
 
   MM.load();
-  //FM.load();
+  OM.load();
   SM.load();
+  //FM.load();
   cID = MM.cID;
   // set Hotkeys
   FyDefineHotKey ( FY_ESCAPE, QuitGame, FALSE );  // escape for quiting the game
@@ -95,8 +98,9 @@ void FyMain ( int argc, char **argv )
 void GameAI ( int skip )
 {
 	if (now_mode == 1)MM.GameAI(skip);
-	if (now_mode == 2 || now_mode == 3)SM.GameAI(skip);
-	if (now_mode == 4)FM.GameAI(skip);
+	if (now_mode == 2)OM.GameAI(skip);
+	if (now_mode == 3 || now_mode == 4)SM.GameAI(skip);
+	if (now_mode == 5)FM.GameAI(skip);
 }
 
 
@@ -107,8 +111,9 @@ void GameAI ( int skip )
 void RenderIt( int skip )
 {
 	if (now_mode == 1)MM.RenderIt(skip);
-	if (now_mode == 2 || now_mode == 3)SM.RenderIt(skip);
-	if (now_mode == 4)FM.RenderIt(skip);
+	if (now_mode == 2)OM.RenderIt(skip);
+	if (now_mode == 3 || now_mode == 4)SM.RenderIt(skip);
+	if (now_mode == 5)FM.RenderIt(skip);
 	// swap buffer
 	FySwapBuffers ();
 }
@@ -121,21 +126,23 @@ void Movement ( BYTE code, BOOL4 value )
 {
 	int next_mode = now_mode;
 	if (now_mode == 1)next_mode = MM.Movement(code, value);
-	if (now_mode == 2)next_mode = SM.Movement(code, value);
-	if (now_mode == 3)return;
-	if (now_mode == 4)next_mode = FM.Movement(code, value);
-	if (!(1 <= next_mode && next_mode <= 4)){
+	if (now_mode == 2)next_mode = OM.Movement(code, value);
+	if (now_mode == 3)next_mode = SM.Movement(code, value);
+	if (now_mode == 4)return;
+	if (now_mode == 5)next_mode = FM.Movement(code, value);
+	if (!(1 <= next_mode && next_mode <= 5)){
 		fprintf(stderr, "mode %d return wrong mode %d", now_mode, next_mode);
 	}
-	assert(1 <= next_mode && next_mode <= 4);
+	assert(1 <= next_mode && next_mode <= 5);
 	now_mode = next_mode;
 	if (now_mode == 1)cID = MM.cID;
-	if (now_mode == 2)cID = SM.cID;
-	if (now_mode == 3){
+	if (now_mode == 2)cID = OM.cID;
+	if (now_mode == 3)cID = SM.cID;
+	if (now_mode == 4){
 		FM.load(FIGHT1P, "Lyubu2", "Donzo2");
-		now_mode = 4;
+		now_mode = 5;
 	}
-	if (now_mode == 4)cID = FM.cID;
+	if (now_mode == 5)cID = FM.cID;
 }
 
 

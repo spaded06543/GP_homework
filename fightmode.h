@@ -202,7 +202,7 @@ struct{
 			}
 		}
 		if (is_end && code == FY_L && value)return 1;
-		return 4;
+		return 5;
 	}
 	void RenderIt(int skip){
 		FnViewport vp;

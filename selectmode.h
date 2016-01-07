@@ -1,9 +1,11 @@
 #include "../Include/FlyWin32.h"
+
 struct{
 	VIEWPORTid vID;
 	SCENEid sID;
 	OBJECTid cID, tID;
 	TEXTid textID;
+	
 	void load(){
 		textID = FAILED_ID;
 		vID = FyCreateViewport(0, 0, 800, 600);
@@ -12,11 +14,13 @@ struct{
 		textID = FyCreateText("Trebuchet MS3", 20, FALSE, FALSE);
 	}
 	void GameAI(int skip){
-
 	}
+	
 	int Movement(BYTE code, BOOL4 value){
-		if (code == FY_UP)return 3;
-		return 2;
+		if (code == FY_UP && value){
+			return 4;
+		}
+		return 3;
 	}
 	void RenderIt(int skip){
 		FnViewport vp;
