@@ -12,7 +12,7 @@
 
   Last Updated : 1004, 2015, Kevin C. Wang
  ===============================================================*/
-#include "../Include/FlyWin32.h"
+#include "FlyWin32.h"
 #include "DefFunction.h"
 #include "template_3D.h"
 #include<vector>
@@ -61,10 +61,11 @@ void FyMain ( int argc, char **argv )
   // create a new world
   BOOL4 beOK = FyStartFlyWin32 ( "NTU@2014 Homework #01 - Use Fly2", 0, 0, 800, 600, FALSE );
 
+  ini_actions_name();
   MM.load();
   OM.load();
   SM.load();
-  //FM.load();
+  FM.load();
   cID = MM.cID;
   // set Hotkeys
   FyDefineHotKey ( FY_ESCAPE, QuitGame, FALSE );  // escape for quiting the game
@@ -95,7 +96,8 @@ void GameAI ( int skip )
 {
 	if (now_mode == 1)MM.GameAI(skip);
 	if (now_mode == 2)OM.GameAI(skip);
-	if (now_mode == 3 || now_mode == 4)SM.GameAI(skip);
+	if (now_mode == 3)SM.GameAI(skip);
+	if (now_mode == 4)return;
 	if (now_mode == 5)FM.GameAI(skip);
 }
 
@@ -108,8 +110,8 @@ void RenderIt( int skip )
 {
 	if (now_mode == 1)MM.RenderIt(skip);
 	if (now_mode == 2)OM.RenderIt(skip);
-	if (now_mode == 3 || now_mode == 4)SM.RenderIt(skip);
-	if (now_mode == 5)FM.RenderIt(skip);
+	if (now_mode == 3)SM.RenderIt(skip);
+	if (now_mode == 4 || now_mode == 5)FM.RenderIt(skip);
 	// swap buffer
 	FySwapBuffers ();
 }
@@ -135,7 +137,7 @@ void Movement ( BYTE code, BOOL4 value )
 	if (now_mode == 2)cID = OM.cID;
 	if (now_mode == 3)cID = SM.cID;
 	if (now_mode == 4){
-		FM.load(FIGHT1P, "Lyubu2", "Donzo2");
+		FM.true_load(FIGHT1P, "Lyubu2", "Donzo2");
 		now_mode = 5;
 	}
 	if (now_mode == 5)cID = FM.cID;

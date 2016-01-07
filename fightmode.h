@@ -15,31 +15,42 @@ struct{
 	OBJECTid cID, tID;                  // the main camera and the terrain for terrain following
 	ROOMid tRID;
 	TEXTid textID;
-
 	int is_end;
-	void load(int mode = FIGHT1P, const char*p1 = "Lyubu2", const char*p2 = "Donzo2"){
-		ini_actions_name();
+	void load(){
+		tRID = FAILED_ID;
+		// create a text object for displaying messages on screen
+		textID = FyCreateText("Trebuchet MS", 18, FALSE, FALSE);
+		// create a viewport
+		vID = FyCreateViewport(0, 0, 800, 600);
+	}
+	void Renderload(char*s){
+		FnViewport vp;
+		vp.ID(vID);
+		vp.Render3D(cID, TRUE, TRUE);
+		FnText text;
+		text.ID(textID);
+		text.Begin(vID);
+		text.Write(s, 20, 20, 255, 0, 0);
+		text.End();
+	}
+	void true_load(int mode = FIGHT1P, const char*p1 = "Lyubu2", const char*p2 = "Donzo2"){
 		is_end = 0;
-		tRID = textID = FAILED_ID;
 		// setup the data searching paths
 		FySetShaderPath("Data\\NTU6\\Shaders");
 		FySetModelPath("Data\\NTU6\\Scenes");
 		FySetTexturePath("Data\\NTU6\\Scenes\\Textures");
 		FySetScenePath("Data\\NTU6\\Scenes");
 
-		// create a viewport
-		vID = FyCreateViewport(0, 0, 800, 600);
-
-		// create a 3D scene
 		sID = FyCreateScene(10);
-		FnScene scene;
-		scene.ID(sID);
-
+		FnScene scene; scene.ID(sID);
+		cID = scene.CreateObject(CAMERA);
 		// load the scene
+		FM.Renderload("NOW loading...  10\% Scene"); FySwapBuffers();
 		scene.Load("gameScene02");
 		scene.SetAmbientLights(1.0f, 1.0f, 1.0f, 0.6f, 0.6f, 0.6f);
 
 		// load the terrain
+		FM.Renderload("NOW loading...  20\% terrain"); FySwapBuffers();
 		tID = scene.CreateObject(OBJECT);
 		FnObject terrain;
 		terrain.ID(tID);
@@ -53,7 +64,7 @@ struct{
 		room.AddObject(tID);
 
 		// load the character
-
+		FM.Renderload("NOW loading...  30\% characters"); FySwapBuffers();
 		allBattleC.clear();
 		const int DN = TYPESOFC, RN = DN - 2 + (string(p1) == p2);
 		//load all
@@ -72,6 +83,7 @@ struct{
 			donzos[i] = SimpleC(cname[i-DN].c_str(), sID, tRID, pos, fDi, uDi, 0);
 			allBattleC.push_back(&donzos[i]);
 		}
+		FM.Renderload("NOW loading...  40\% main characters"); FySwapBuffers();
 		//load 2P
 		{
 			dot fDi = dot(0, 1, 0);
@@ -90,6 +102,7 @@ struct{
 			cID = mainC.cID;
 		}
 		// lighting
+		FM.Renderload("NOW loading...  50\% light"); FySwapBuffers();
 		dot mainLightPos = dot( -4579,   -714,   15530);
 		dot mainLightFDi = dot(0.276f,   0.0f, -0.961f);
 		dot mainLightUDi = dot(0.961f, 0.026f,  0.276f);
@@ -102,9 +115,7 @@ struct{
 		lgt.SetColor(1.0f, 1.0f, 1.0f);
 		lgt.SetName("MainLight");
 		lgt.SetIntensity(0.4f);
-
-		// create a text object for displaying messages on screen
-		textID = FyCreateText("Trebuchet MS", 18, FALSE, FALSE);
+		FM.Renderload("NOW loading... 100\%"); FySwapBuffers();
 	}
 	void GameAI(int skip){
 		// update timer
@@ -210,7 +221,7 @@ struct{
 		// render the whole scene
 		vp.ID(vID);
 		vp.Render3D(cID, TRUE, TRUE);
-
+		if (tRID == FAILED_ID)return;
 		// get camera's data
 		FnCamera camera;
 		camera.ID(cID);
