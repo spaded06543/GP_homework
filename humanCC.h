@@ -15,17 +15,17 @@ struct HumanCC : public BattleC {
 		camera.SetFarPlane(100000.0f);
 
 		// set camera initial position and orientation
-		set_cam_dir(&fDi, &uDi);
+		set_cam_dir(&fDi, &uDi, DEFAULT);
 		set_cam_pos(&pos, &pos, &uDi);
 		camera.SetPosition(&pos);
 		camera.SetDirection(&fDi, &uDi);
 	}
 	BOOL4 want_to_move(){
 		return
-			FyCheckHotKeyStatus(FY_UP) || FyCheckHotKeyStatus(FY_W) ||
-			FyCheckHotKeyStatus(FY_RIGHT) || FyCheckHotKeyStatus(FY_D) ||
-			FyCheckHotKeyStatus(FY_LEFT) || FyCheckHotKeyStatus(FY_A) ||
-			FyCheckHotKeyStatus(FY_DOWN) || FyCheckHotKeyStatus(FY_S);
+			FyCheckHotKeyStatus(FY_UP) ||
+			FyCheckHotKeyStatus(FY_RIGHT) ||
+			FyCheckHotKeyStatus(FY_LEFT) ||
+			FyCheckHotKeyStatus(FY_DOWN);
 	}
 	void gen_act(vector<BattleC*>&allBattleC){
 		if (play_time != 0 || curpID == dieeID){
@@ -46,7 +46,7 @@ struct HumanCC : public BattleC {
 		// camera & actor position
 		float cam_pos[3], act_pos[3];
 		// get camera & actor direction
-		float cam_fDir[3], cam_uDir[3], act_fDir[3];
+		float cam_fDir[3], cam_uDir[3], act_fDir[3], act_uDir[3] = { 0.0, 0.0, 1.0 };
 		camera.GetDirection(cam_fDir, cam_uDir);
 		actor.GetDirection(act_fDir, NULL);
 		// dis-accuracy prevent
@@ -69,15 +69,24 @@ struct HumanCC : public BattleC {
 			}
 
 			// actor move
-			if (can_move)
-				actor.MoveForward(Speed, TRUE, FALSE, 0.0f, TRUE);
-
-			// if too far, camera foward
-			camera.GetPosition(cam_pos);
-			actor.GetPosition(act_pos);
-			if (distance(cam_pos, act_pos) > dis) {
-				set_cam_pos(cam_pos, act_pos, cam_fDir);
-				camera.SetPosition(cam_pos);
+			if (can_move) {
+				if ( actor.MoveForward(Speed, TRUE, FALSE, 0.0f, TRUE) != BOUNDARY) {
+					camera.GetPosition(cam_pos);
+					actor.GetPosition(act_pos);
+					if ( distance(cam_pos, act_pos ) < dis ) {
+						cam_fDir[0] = act_pos[0] - cam_pos[0];
+						cam_fDir[1] = act_pos[1] - cam_pos[1];
+						cam_fDir[2] = act_pos[2] - cam_pos[2]+42.946793;
+						set_cam_dir(cam_fDir, cam_uDir);
+						camera.SetDirection(cam_fDir, cam_uDir);
+					}
+					else {
+						camera.GetDirection(cam_fDir, cam_uDir);
+						camera.SetDirection(act_fDir, act_uDir);
+						camera.MoveForward(Speed, TRUE, FALSE, 0.0f, TRUE);
+						camera.SetDirection(cam_fDir, cam_uDir);
+					}
+				}
 			}
 		}
 
@@ -92,16 +101,49 @@ struct HumanCC : public BattleC {
 
 			// actor move
 			if (can_move) {
-				actor.MoveForward(Speed, TRUE, FALSE, 0.0f, TRUE);
+				if ( actor.MoveForward(Speed, TRUE, FALSE, 0.0f, TRUE) != BOUNDARY) {
+					float o_cam_pos[3];
+					camera.GetPosition(o_cam_pos);
+
+					camera.GetDirection(cam_fDir, cam_uDir);
+					camera.SetDirection(act_fDir, act_uDir);
+					camera.MoveForward(Speed, TRUE, FALSE, 0.0f, TRUE);
+
+					camera.GetPosition(cam_pos);
+					float dir[3] = { 0.0f, 0.0f, -1.0f };
+					if ( terrain.HitTest ( cam_pos, dir ) <= 0 ) {
+						camera.SetPosition(o_cam_pos);
+						actor.GetPosition(act_pos);
+
+						cam_fDir[0] = act_pos[0] - o_cam_pos[0];
+						cam_fDir[1] = act_pos[1] - o_cam_pos[1];
+						cam_fDir[2] = act_pos[2] - o_cam_pos[2]+42.946793;
+						set_cam_dir(cam_fDir, cam_uDir);
+						camera.SetDirection(cam_fDir, cam_uDir);
+					}
+					else
+						camera.SetDirection(cam_fDir, cam_uDir);
+
+
+
+
+					
+
+				}
+			}
+/*
+			// if too close, camera backward
+			actor.GetPosition(act_pos);
+			
+			float dir[3] = { 0.0f, 0.0f, -1.0f };
+			if ( terrain.HitTest ( cam_pos, dir ) <= 0 ) {
+				dis_p -= Speed;
+				height = sqrt ( dis*dis - dis_p*dis_p );
+				cam_pos[2] = height;
 			}
 
-			// if too close, camera backward
-			camera.GetPosition(cam_pos);
-			actor.GetPosition(act_pos);
-			if (distance(cam_pos, act_pos) < dis) {
-				set_cam_pos(cam_pos, act_pos, cam_fDir);
-				camera.SetPosition(cam_pos);
-			}
+			camera.SetPosition(cam_pos);
+*/
 		}
 
 		// ***** Right *****
@@ -113,8 +155,6 @@ struct HumanCC : public BattleC {
 			}
 
 			// actor move
-			actor.GetPosition(act_pos);
-			camera.GetPosition(cam_pos);
 			if (can_turn)
 				actor.TurnRight(THETA);
 			if (can_move){
@@ -131,6 +171,7 @@ struct HumanCC : public BattleC {
 			camera.GetPosition(cam_pos);
 			cam_fDir[0] = act_pos[0] - cam_pos[0];
 			cam_fDir[1] = act_pos[1] - cam_pos[1];
+			cam_fDir[2] = act_pos[2] - cam_pos[2]+42.946793;
 			set_cam_dir(cam_fDir, cam_uDir);
 			camera.SetDirection(cam_fDir, cam_uDir);
 		}
@@ -144,9 +185,8 @@ struct HumanCC : public BattleC {
 			}
 
 			// actor move
-			actor.GetPosition(act_pos);
-			camera.GetPosition(cam_pos);
-			if (can_turn)actor.TurnRight(-THETA);
+			if (can_turn)
+				actor.TurnRight(-THETA);
 			if (can_move){
 				if (actor.MoveForward(Speed, TRUE, FALSE, 0.0f, TRUE) == BOUNDARY) {
 					float Dir[3] = { 0.0f, 0.0f, 1.0f };
@@ -161,6 +201,7 @@ struct HumanCC : public BattleC {
 			camera.GetPosition(cam_pos);
 			cam_fDir[0] = act_pos[0] - cam_pos[0];
 			cam_fDir[1] = act_pos[1] - cam_pos[1];
+			cam_fDir[2] = act_pos[2] - cam_pos[2]+42.946793;
 			set_cam_dir(cam_fDir, cam_uDir);
 			camera.SetDirection(cam_fDir, cam_uDir);
 		}
@@ -169,57 +210,28 @@ struct HumanCC : public BattleC {
 		// ***** Double hot key pressed direction *****
 		// assume no more key pressed at the same time
 		// up and right
-		if ((FyCheckHotKeyStatus(FY_W) || FyCheckHotKeyStatus(FY_UP)) &&
-			(FyCheckHotKeyStatus(FY_D) || FyCheckHotKeyStatus(FY_RIGHT))) {
+		if (FyCheckHotKeyStatus(FY_UP) && FyCheckHotKeyStatus(FY_RIGHT)) {
 			mix_dir(cam_fDir, act_fDir, UP_RIGHT);
-			if (can_turn)actor.SetDirection(act_fDir, NULL);
+			if (can_turn)
+				actor.SetDirection(act_fDir, NULL);
 		}
 		// up and left
-		else if ((FyCheckHotKeyStatus(FY_W) || FyCheckHotKeyStatus(FY_UP)) &&
-			(FyCheckHotKeyStatus(FY_A) || FyCheckHotKeyStatus(FY_LEFT))) {
+		else if ( FyCheckHotKeyStatus(FY_UP) && FyCheckHotKeyStatus(FY_LEFT)) {
 			mix_dir(cam_fDir, act_fDir, UP_LEFT);
-			if (can_turn)actor.SetDirection(act_fDir, NULL);
+			if (can_turn)
+				actor.SetDirection(act_fDir, NULL);
 		}
 		// down and right
-		else if ((FyCheckHotKeyStatus(FY_S) || FyCheckHotKeyStatus(FY_DOWN)) &&
-			(FyCheckHotKeyStatus(FY_D) || FyCheckHotKeyStatus(FY_RIGHT))) {
+		else if ( FyCheckHotKeyStatus(FY_DOWN) && FyCheckHotKeyStatus(FY_RIGHT)) {
 			mix_dir(cam_fDir, act_fDir, DOWN_RIGHT);
-			if (can_turn)actor.SetDirection(act_fDir, NULL);
+			if (can_turn)
+				actor.SetDirection(act_fDir, NULL);
 		}
 		// down and left
-		else if ((FyCheckHotKeyStatus(FY_S) || FyCheckHotKeyStatus(FY_DOWN)) &&
-			(FyCheckHotKeyStatus(FY_A) || FyCheckHotKeyStatus(FY_LEFT))) {
+		else if ( FyCheckHotKeyStatus(FY_DOWN) && FyCheckHotKeyStatus(FY_LEFT)) {
 			mix_dir(cam_fDir, act_fDir, DOWN_LEFT);
-			if (can_turn)actor.SetDirection(act_fDir, NULL);
+			if (can_turn)
+				actor.SetDirection(act_fDir, NULL);
 		}
-
-		/*float dir[3] = { 0.0f, 0.0f, -1.0f };
-		if ( terrain.HitTest ( cam_pos, dir ) <= 0 ) {
-			camera.GetPosition ( cam_pos );
-			cam_pos[2] += 10;
-			camera.SetPosition ( cam_pos );
-		}
-		// if cam run into terrain
-		/*camera.GetPosition ( cam_pos );
-		float dir[3] = { 0.0f, 0.0f, -1.0f };
-
-		if ( terrain.HitTest ( cam_pos, dir ) <= 0 ) {
-		}*/
-		/*if ( terrain.HitTest ( cam_pos, dir ) <= 0 ) {
-
-		do {
-
-		cam_angle += PHI;
-		float fixed_dis = DISTANCE * cos ( degree2rad ( cam_angle ) );
-		float k = sqrt ( ( dis * dis ) / ( cam_fDir[0] * cam_fDir[0] + cam_fDir[1] * cam_fDir[1] ) );
-		cam_pos[0] = k * cam_fDir[0] * fixed_dis;
-		cam_pos[1] = k * cam_fDir[1] * fixed_dis;
-		cam_pos[2] = height = DISTANCE * sin ( degree2rad ( cam_angle ) );
-		camera.SetPosition ( cam_pos );
-		set_cam_dir ( cam_fDir, cam_uDir );
-		camera.SetDirection ( cam_fDir, cam_uDir );
-		} while ( terrain.HitTest ( cam_pos, cam_fDir ) > 0 );
-
-		}*/
 	}
 };
