@@ -25,28 +25,28 @@ struct{
 		spID = scene.CreateObject(SPRITE);
 		sp.ID(spID);
 		sp.SetSize(200, 40);
-		sp.SetImage("Image/Start", 0, NULL, 0, NULL, NULL, MANAGED_MEMORY, false, false);
+		sp.SetImage("Image/Start", 0, NULL, 0, NULL, NULL, MANAGED_MEMORY, FALSE, FALSE);
 		sp.SetPosition(300, 250, 0);
 		
 		// OPTION Button
 		spID = scene.CreateObject(SPRITE);
 		sp.ID(spID);
 		sp.SetSize(200, 40);
-		sp.SetImage("Image/Option", 0, NULL, 0, NULL, NULL, MANAGED_MEMORY, false, false);
+		sp.SetImage("Image/Option", 0, NULL, 0, NULL, NULL, MANAGED_MEMORY, FALSE, FALSE);
 		sp.SetPosition(300, 200, 0);
 		
 		// QUIT Button
 		spID = scene.CreateObject(SPRITE);
 		sp.ID(spID);
 		sp.SetSize(200, 40);
-		sp.SetImage("Image/Quit", 0, NULL, 0, NULL, NULL, MANAGED_MEMORY, false, false);
+		sp.SetImage("Image/Quit", 0, NULL, 0, NULL, NULL, MANAGED_MEMORY, FALSE, FALSE);
 		sp.SetPosition(300, 150, 0);
 		
 		// Selection mark
 		spID = scene.CreateObject(SPRITE);
 		sp.ID(spID);
 		sp.SetSize(200, 40);
-		sp.SetImage("Image/Select", 0, NULL, 0, NULL, NULL, MANAGED_MEMORY, false, false);
+		sp.SetImage("Image/Select", 0, NULL, 0, NULL, NULL, MANAGED_MEMORY, FALSE, FALSE);
 		sp.SetPosition(300, 250-50*mode_select, 0);
 		
 	}
@@ -73,8 +73,7 @@ struct{
 		
 		FnViewport vp;
 		vp.ID(vID);
-		vp.Render3D(cID, TRUE, TRUE);
-        vp.RenderSprites(sID, FALSE, TRUE);
+        vp.RenderSprites(sID, TRUE, TRUE);
 		
 		FnText text;
 		text.ID(textID);

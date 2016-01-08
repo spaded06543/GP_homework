@@ -11,10 +11,14 @@ SimpleC donzos[20];
 #define FIGHT32 3 //todo
 struct{
 	VIEWPORTid vID;                     // the major viewport
-	SCENEid sID;                        // the 3D scene
-	OBJECTid cID, tID;                  // the main camera and the terrain for terrain following
+	SCENEid sID, sID2;                  // the 3D scene and scene for sprites
+	OBJECTid cID, tID, spID;            // the main camera and the terrain for terrain following
+	OBJECTid spID_P1HP[3], spID_P2HP[3];
 	ROOMid tRID;
 	TEXTid textID;
+	SimpleC * P2_pointer;
+	int P1HP_max, P1HP_display;
+	int P2HP_max, P2HP_display;
 	int is_end;
 	void load(){
 		tRID = FAILED_ID;
@@ -48,6 +52,11 @@ struct{
 		FM.Renderload("NOW loading...  10% Scene"); FySwapBuffers();
 		scene.Load("gameScene02");
 		scene.SetAmbientLights(1.0f, 1.0f, 1.0f, 0.6f, 0.6f, 0.6f);
+		
+		sID2 = FyCreateScene(1);
+		FnScene s_scene;
+		s_scene.ID(sID2);
+		s_scene.SetSpriteWorldSize(800, 600);
 
 		// load the terrain
 		FM.Renderload("NOW loading...  20% terrain"); FySwapBuffers();
@@ -90,6 +99,8 @@ struct{
 			dot uDi = dot(0, 0, 1);
 			dot pos = dot(3569.0f, -3208.0f, 1000.0f) - 1000 * fDi;
 			donzos[2*DN] = SimpleC(p2, sID, tRID, pos, fDi, uDi, 1);
+			P2_pointer = &donzos[2*DN];
+			P2HP_max = donzos[2*DN].life;
 			allBattleC.push_back(&donzos[2*DN]);
 		}
 		//load 1P
@@ -100,6 +111,7 @@ struct{
 			mainC = HumanCC(p1, sID, tRID, pos, fDi, uDi, 0);
 			allBattleC.push_back(&mainC);
 			cID = mainC.cID;
+			P1HP_max = mainC.life;
 		}
 		// lighting
 		FM.Renderload("NOW loading...  50% light"); FySwapBuffers();
@@ -115,6 +127,62 @@ struct{
 		lgt.SetColor(1.0f, 1.0f, 1.0f);
 		lgt.SetName("MainLight");
 		lgt.SetIntensity(0.4f);
+		// Sprites (HP, image, etc.)
+		FM.Renderload("NOW loading...  60% sprites"); FySwapBuffers();
+		FnSprite sp;
+		
+		spID = s_scene.CreateObject(SPRITE);
+		sp.ID(spID);
+		sp.SetSize(310, 40);
+		sp.SetImage("Image/HP_frame", 0, NULL, 0, NULL, NULL, MANAGED_MEMORY, FALSE, FALSE);
+		sp.SetPosition(25, 545, 0);
+		
+		spID = s_scene.CreateObject(SPRITE);
+		sp.ID(spID);
+		sp.SetSize(310, 40);
+		sp.SetImage("Image/HP_frame", 0, NULL, 0, NULL, NULL, MANAGED_MEMORY, FALSE, FALSE);
+		sp.SetPosition(465, 545, 0);
+		
+		spID_P1HP[0] = s_scene.CreateObject(SPRITE);
+		sp.ID(spID_P1HP[0]);
+		sp.SetSize(300, 30);
+		sp.SetImage("Image/HP_G", 0, NULL, 0, NULL, NULL, MANAGED_MEMORY, FALSE, FALSE);
+		sp.SetPosition(30, 550, 0);
+		
+		spID_P1HP[1] = s_scene.CreateObject(SPRITE);
+		sp.ID(spID_P1HP[1]);
+		sp.SetSize(300, 30);
+		sp.SetImage("Image/HP_R", 0, NULL, 0, NULL, NULL, MANAGED_MEMORY, FALSE, FALSE);
+		sp.Twiddle(FALSE); // set invisible
+		sp.SetPosition(30, 550, 0);
+		
+		spID_P1HP[2] = s_scene.CreateObject(SPRITE);
+		sp.ID(spID_P1HP[2]);
+		sp.SetSize(300, 30);
+		sp.SetImage("Image/HP_lose", 0, NULL, 0, NULL, NULL, MANAGED_MEMORY, FALSE, FALSE);
+		sp.Twiddle(FALSE); // set invisible
+		sp.SetPosition(30, 550, 0);
+		
+		spID_P2HP[0] = s_scene.CreateObject(SPRITE);
+		sp.ID(spID_P2HP[0]);
+		sp.SetSize(300, 30);
+		sp.SetImage("Image/HP_G", 0, NULL, 0, NULL, NULL, MANAGED_MEMORY, FALSE, FALSE);
+		sp.SetPosition(470, 550, 0);
+		
+		spID_P2HP[1] = s_scene.CreateObject(SPRITE);
+		sp.ID(spID_P2HP[1]);
+		sp.SetSize(300, 30);
+		sp.SetImage("Image/HP_R", 0, NULL, 0, NULL, NULL, MANAGED_MEMORY, FALSE, FALSE);
+		sp.Twiddle(FALSE); // set invisible
+		sp.SetPosition(470, 550, 0);
+		
+		spID_P2HP[2] = s_scene.CreateObject(SPRITE);
+		sp.ID(spID_P2HP[2]);
+		sp.SetSize(300, 30);
+		sp.SetImage("Image/HP_lose", 0, NULL, 0, NULL, NULL, MANAGED_MEMORY, FALSE, FALSE);
+		sp.Twiddle(FALSE); // set invisible
+		sp.SetPosition(470, 550, 0);
+		
 		FM.Renderload("NOW loading... 100%"); FySwapBuffers();
 	}
 	void GameAI(int skip){
@@ -232,10 +300,18 @@ struct{
 	}
 	void RenderIt(int skip){
 		FnViewport vp;
-
+		
+		int P1HP_length = int(300.0 * float(mainC.life) / float(P1HP_max));
+		int P2HP_length = int(300.0 * float((*P2_pointer).life) / float(P2HP_max));
+		FnSprite sp;
+		sp.ID(spID_P1HP[0]);
+		sp.SetSize(P1HP_length, 30);
+		sp.ID(spID_P2HP[0]);
+		sp.SetSize(P2HP_length, 30);
 		// render the whole scene
 		vp.ID(vID);
 		vp.Render3D(cID, TRUE, TRUE);
+		vp.RenderSprites(sID2, FALSE, TRUE);
 		if (tRID == FAILED_ID)return;
 		// get camera's data
 		FnCamera camera;
