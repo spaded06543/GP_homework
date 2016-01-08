@@ -7,7 +7,7 @@ Data
 /*.log
 source/
 /*.opensdf
-
+*.*.bak
 !Work/
 
 Work/*
