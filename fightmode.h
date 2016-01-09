@@ -17,8 +17,8 @@ struct{
 	ROOMid tRID;
 	TEXTid textID;
 	SimpleC * P2_pointer;
-	int P1HP_max, P1HP_display;
-	int P2HP_max, P2HP_display;
+	int P1HP_max, P1HP_loseL;
+	int P2HP_max, P2HP_loseL;
 	int is_end;
 	void load(){
 		tRID = FAILED_ID;
@@ -129,6 +129,8 @@ struct{
 		lgt.SetIntensity(0.4f);
 		// Sprites (HP, image, etc.)
 		FM.Renderload("NOW loading...  60% sprites"); FySwapBuffers();
+		P1HP_loseL = 300;
+		P2HP_loseL = 300;
 		FnSprite sp;
 		
 		spID = s_scene.CreateObject(SPRITE);
@@ -160,7 +162,7 @@ struct{
 		sp.ID(spID_P1HP[2]);
 		sp.SetSize(300, 30);
 		sp.SetImage("Image/HP_lose", 0, NULL, 0, NULL, NULL, MANAGED_MEMORY, FALSE, FALSE);
-		sp.Twiddle(FALSE); // set invisible
+		//sp.Twiddle(FALSE); // set invisible
 		sp.SetPosition(30, 550, 0);
 		
 		spID_P2HP[0] = s_scene.CreateObject(SPRITE);
@@ -180,7 +182,7 @@ struct{
 		sp.ID(spID_P2HP[2]);
 		sp.SetSize(300, 30);
 		sp.SetImage("Image/HP_lose", 0, NULL, 0, NULL, NULL, MANAGED_MEMORY, FALSE, FALSE);
-		sp.Twiddle(FALSE); // set invisible
+		//sp.Twiddle(FALSE); // set invisible
 		sp.SetPosition(470, 550, 0);
 		
 		FM.Renderload("NOW loading... 100%"); FySwapBuffers();
@@ -306,8 +308,16 @@ struct{
 		FnSprite sp;
 		sp.ID(spID_P1HP[0]);
 		sp.SetSize(P1HP_length, 30);
+		if (P1HP_loseL > P1HP_length) P1HP_loseL -= 2;
+		sp.ID(spID_P1HP[2]);
+		sp.SetSize(P1HP_loseL, 30);
+		
 		sp.ID(spID_P2HP[0]);
 		sp.SetSize(P2HP_length, 30);
+		if (P2HP_loseL > P2HP_length) P2HP_loseL -= 2;
+		sp.ID(spID_P2HP[2]);
+		sp.SetSize(P2HP_loseL, 30);
+		
 		// render the whole scene
 		vp.ID(vID);
 		vp.Render3D(cID, TRUE, TRUE);
