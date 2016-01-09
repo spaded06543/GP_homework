@@ -138,7 +138,7 @@ void Movement ( BYTE code, BOOL4 value )
 	if (now_mode == 2)cID = OM.cID;
 	if (now_mode == 3)cID = SM.cID;
 	if (now_mode == 4){
-		FM.true_load(FIGHT1P, "Lyubu2", "Donzo2");
+		FM.true_load(FIGHT1P, character_name[SM.select_character].c_str(), "Donzo2");
 		now_mode = 5;
 	}
 	if (now_mode == 5)cID = FM.cID;
