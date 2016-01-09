@@ -3,6 +3,26 @@
 #include <cstdio>
 #include <iostream>
 #include <vector>
+#define TYPESOFC 4
+string character_name[TYPESOFC] = {
+	"Donzo2",
+	"Lyubu2",
+	"Robber02",
+	"Footman01",
+};
+
+struct info{
+	int life;
+	dou speed;
+	int attnD, attnPT;
+	dou attnR, attnT;
+};
+info INFO[TYPESOFC] = {
+	info({ 300, +6, 30, 20, 140, 75 }),
+	info({ 200, 12, 20, 20, 140, 25 }),
+	info({ +30, +9, 10, 20, 140, 25 }),
+	info({ +75, +9, 15, 20, 140, 25 }),
+};
 
 struct{
 	VIEWPORTid vID;
@@ -104,7 +124,12 @@ struct{
 		BYTE red = 255, green = 255, blue = 255;
 		int positionX = 300, positionY = 100;
 		sprintf(S, "Choose the character you want\nPress \"Z\" to select character.\n");
-		sprintf(character_info, "Character : \nAttack : \nBlood : \nSpeed : \n"); // TODO : need characterinformation
+		sprintf(character_info, "Character : %s\nAttack : \t%f\nBlood : \t%d\nSpeed : \t%d\n", 
+															character_name[select_character].c_str(), 
+															INFO[select_character].speed,
+															INFO[select_character].life,
+															INFO[select_character].attnD); // TODO : need characterinformation
+		
 		text.Write(S, positionX, positionY, red, green, blue); // 
 		text.Write(character_info, 300, 350, red, green, blue); // print infomation 
 		text.End();
