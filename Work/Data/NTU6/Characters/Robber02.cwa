@@ -16,7 +16,7 @@ Body Robber_02
 {
    Parent Root
    RootBone Bip01
-   Actions 11
+   Actions 12
       ActionData Idle SimpleAction COMBATIDEL
       ActionData CombatIdle SimpleAction COMBATIDEL
       ActionData MoveRight SimpleAction RSHIFT
@@ -28,6 +28,7 @@ Body Robber_02
       ActionData Damage2 SimpleAction DAMAGED02
       ActionData Run SimpleAction RUN
       ActionData Dead SimpleAction DEAD
+	  ActionData Defence SimpleAction COMBATIDEL
 
    DefaultAction 0 CombatIdle
 

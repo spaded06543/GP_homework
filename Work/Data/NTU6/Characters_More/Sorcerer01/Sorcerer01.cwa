@@ -16,7 +16,7 @@ Body Sorcerer01
 {
    Parent Root
    RootBone Bip01
-   Actions 7
+   Actions 8
       ActionData Idle SimpleAction Idle
 	  ActionData CombatIdle SimpleAction combat_mode_B
       ActionData Run SimpleAction Run
@@ -24,6 +24,7 @@ Body Sorcerer01
 	  ActionData Hit_from_front SimpleAction Hit_from_front
 	  ActionData Hit_from_back SimpleAction Hit_from_back
 	  ActionData Dying_A SimpleAction Dying_A
+	  ActionData Defence SimpleAction staf_block
 
    DefaultAction 0 Idle
 

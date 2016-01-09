@@ -1,11 +1,12 @@
 #ifndef _battleC_h_
 #include"battleC.h"
 #endif
+typedef pair<ACTIONid, int> PA;
 struct SimpleC : public BattleC {
 	SimpleC() {}
 	SimpleC(const char* name_, SCENEid sID, ROOMid tRID, dot pos, dot fDi, dot uDi, int group_) : BattleC(name_, sID, tRID, pos, fDi, uDi, group_, 1){}
 	void gen_act(vector<BattleC*>&allBattleC){
-		vector<pair<ACTIONid, int>>posA(0);//possilbe act, weight possibility
+		vector<PA>posA(0);//possilbe act, weight possibility
 		int total_weight = 0;
 		BattleC*targetC = find_target(ALL(allBattleC));
 		dou disab = targetC ? Cdis(*targetC) : 0;
@@ -18,35 +19,58 @@ struct SimpleC : public BattleC {
 		}
 		else if (curpID == idleID || curpID == damnID){
 			if (TRUE){
-				posA.push_back(pair<ACTIONid, int>(curpID, 10 + 40 * (curpID == idleID)));
+				posA.push_back(PA(curpID, 10 + 40 * (curpID == idleID)));
 			}
 			if (disab < 2 * attnR){
-				posA.push_back(pair<ACTIONid, int>(attnID, 10));
+				posA.push_back(PA(attnID, 10));
 			}
 			if (disab >= 64){
-				posA.push_back(pair<ACTIONid, int>(runnID, 10));
+				posA.push_back(PA(runnID, 10));
+			}
+			if (disab < 2 * attnR && ctype != 2){
+				posA.push_back(PA(defeID, 10));
 			}
 		}
 		else if (curpID == attnID){
 			if (TRUE){
-				posA.push_back(pair<ACTIONid, int>(idleID, 1 + 10 * (disab >= 2 * attnR)));
+				posA.push_back(PA(idleID, 1 + 10 * (disab >= 2 * attnR)));
 			}
 			if (TRUE){
-				posA.push_back(pair<ACTIONid, int>(attnID, 100));
+				posA.push_back(PA(attnID, 100));
 			}
 			if (disab >= 64){
-				posA.push_back(pair<ACTIONid, int>(runnID, 10));
+				posA.push_back(PA(runnID, 10));
+			}
+			if (disab < 2 * attnR && ctype != 2){
+				posA.push_back(PA(defeID, 10));
 			}
 		}
 		else if (curpID == runnID){
 			if (TRUE){
-				posA.push_back(pair<ACTIONid, int>(idleID, 1 + 1 * (disab >= 2 * attnR)));
+				posA.push_back(PA(idleID, 1 + 1 * (disab >= 2 * attnR)));
 			}
 			if (disab < 2 * attnR){
-				posA.push_back(pair<ACTIONid, int>(attnID, 10));
+				posA.push_back(PA(attnID, 10));
 			}
 			if (disab >= 64){
-				posA.push_back(pair<ACTIONid, int>(runnID, 100));
+				posA.push_back(PA(runnID, 100));
+			}
+			if (disab < 2 * attnR && ctype != 2){
+				posA.push_back(PA(defeID, 10));
+			}
+		}
+		else if (curpID == defeID){
+			if (TRUE){
+				posA.push_back(PA(idleID, 1));
+			}
+			if (disab < 2 * attnR){
+				posA.push_back(PA(attnID, 10));
+			}
+			if (disab >= 64){
+				posA.push_back(PA(runnID, 10));
+			}
+			if (TRUE && defe_time < 60){
+				posA.push_back(PA(defeID, 100));
 			}
 		}
 		else{

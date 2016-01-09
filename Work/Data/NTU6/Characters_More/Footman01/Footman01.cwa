@@ -16,13 +16,14 @@ Body Footman01
 {
    Parent Root
    RootBone Bip01
-   Actions 6
+   Actions 7
       ActionData Idle SimpleAction Idle
 	  ActionData CombatIdle SimpleAction 1H_combat_mode
       ActionData Run SimpleAction Run
 	  ActionData 1H_swing_left SimpleAction 1H_swing_left
 	  ActionData Hit_from_front SimpleAction Hit_from_front
 	  ActionData Dying_A SimpleAction Dying_A
+	  ActionData Defence SimpleAction 1H_banging_shield
 
    DefaultAction 0 Idle
 

@@ -15,7 +15,7 @@ struct{
 	OBJECTid cID, tID, spID;            // the main camera and the terrain for terrain following
 	OBJECTid spID_P1HP[3], spID_P2HP[3];
 	ROOMid tRID;
-	TEXTid textID;
+	TEXTid textID, textID2;
 	SimpleC * P2_pointer;
 	int P1HP_max, P1HP_loseL;
 	int P2HP_max, P2HP_loseL;
@@ -24,6 +24,7 @@ struct{
 		tRID = FAILED_ID;
 		// create a text object for displaying messages on screen
 		textID = FyCreateText("Trebuchet MS", 18, FALSE, FALSE);
+		textID2 = FyCreateText("Trebuchet MS", 36, FALSE, FALSE);
 		// create a viewport
 		vID = FyCreateViewport(0, 0, 800, 600);
 	}
@@ -32,9 +33,9 @@ struct{
 		vp.ID(vID);
 		vp.Render3D(cID, TRUE, TRUE);
 		FnText text;
-		text.ID(textID);
+		text.ID(textID2);
 		text.Begin(vID);
-		text.Write(s, 20, 20, 255, 0, 0);
+		text.Write(s, 200, 400, 255, 0, 0);
 		text.End();
 	}
 	void true_load(int mode = FIGHT1P, const char*p1 = "Lyubu2", const char*p2 = "Donzo2"){
@@ -191,7 +192,7 @@ struct{
 		// update timer
 		for (BattleC* pointer : allBattleC){
 			BattleC&battleC = *pointer;
-			battleC.dead_time += (battleC.life == 0) * skip;
+			battleC.defe_time = (battleC.curpID == battleC.defeID) * (battleC.defe_time + skip);
 			battleC.wudi_time = max(battleC.wudi_time - skip, 0);
 			battleC.play_time = max(battleC.play_time - skip, 0);
 		}
@@ -206,6 +207,15 @@ struct{
 			if (battleC.curpID == battleC.attnID){
 				battleC.play_time = battleC.attnPT;
 			}
+			else if (oldpID == battleC.defeID){
+				battleC.play_time = 2;
+			}
+			else if (oldpID == battleC.damnID){
+				battleC.play_time = 0;
+			}
+			else if (battleC.curpID == battleC.defeID){
+				battleC.play_time = 20;
+			}
 			else{
 				battleC.play_time = 10;
 			}
@@ -217,8 +227,9 @@ struct{
 		}
 		// play character pose
 		for (BattleC* pointer : allBattleC){
-			BattleC& battleC = *pointer;
-			battleC.Play(battleC.curpID == battleC.dieeID || battleC.curpID == battleC.damnID ? ONCE : LOOP, (float)skip, FALSE, TRUE);
+			BattleC& p = *pointer;
+			BOOL4 is_once = p.curpID == p.dieeID || p.curpID == p.damnID || p.curpID == p.defeID;
+			p.Play(is_once ? ONCE : LOOP, (float)skip, FALSE, TRUE);
 		}
 		// attack judge
 		for (BattleC* pointer : allBattleC){
@@ -246,6 +257,7 @@ struct{
 		}
 	}
 	int Movement(BYTE code, BOOL4 value){
+		if (mainC.play_time != 0)return 5;
 		int is_moving_code = code == FY_UP || code == FY_RIGHT || code == FY_LEFT || code == FY_DOWN;
 		if (value) {
 			if (is_moving_code) {
@@ -261,8 +273,15 @@ struct{
 					mainC.Play(START, 0.0f, FALSE, TRUE);
 				}
 			}
+			else if (code == FY_C){
+				BOOL4 can_defe = mainC.curpID != mainC.attnID && mainC.curpID != mainC.dieeID;
+				if (can_defe){
+					mainC.SetCurrentAction(0, NULL, mainC.curpID = mainC.defeID, 5.0f);
+					mainC.Play(START, 0.0f, FALSE, TRUE);
+				}
+			}
 			else if (code == FY_X){
-				BOOL4 can_aimm = mainC.curpID != mainC.attnID && mainC.curpID != mainC.dieeID;
+				BOOL4 can_aimm = mainC.curpID != mainC.attnID && mainC.curpID != mainC.dieeID && mainC.curpID != mainC.defeID;
 				if (can_aimm){
 					mainC.SetCurrentAction(0, NULL, mainC.curpID = mainC.aimmID, 5.0f);
 					mainC.Play(START, 0.0f, FALSE, TRUE);
@@ -288,6 +307,13 @@ struct{
 					}
 					mainC.SetCurrentAction(0, NULL, mainC.curpID, 5.0f);
 					mainC.Play(START, 0.0f, FALSE, TRUE);
+				}
+			}
+			else if (code == FY_C){
+				if (mainC.curpID == mainC.defeID){
+					mainC.SetCurrentAction(0, NULL, mainC.curpID = (mainC.want_to_move() ? mainC.runnID : mainC.idleID), 5.0f);
+					mainC.Play(START, 0.0f, FALSE, TRUE);
+					mainC.play_time = 2;
 				}
 			}
 			else if (code == FY_X){
@@ -332,13 +358,13 @@ struct{
 		camera.GetDirection(fDir, uDir);
 
 		// show frame rate
-		static char string[128];
+		static char S[256];
 		if (frame == 0) {
 			FyTimerReset(0);
 		}
 
 		if (frame / 10 * 10 == frame) {
-			sprintf(string, "Fps: %6.2f", frame / FyTimerCheckTime(0));
+			sprintf(S, "Fps: %6.2f", frame / FyTimerCheckTime(0));
 		}
 		frame += skip;
 		if (frame >= 1000) {
@@ -348,9 +374,9 @@ struct{
 		text.ID(textID);
 
 		text.Begin(vID);
-		text.Write(string, 20, 20, 255, 0, 0);
+		text.Write(S, 20, 20, 255, 0, 0);
 
-		char posS[256], fDiS[256], uDiS[256];
+		static char posS[256], fDiS[256], uDiS[256];
 		sprintf(posS, "pos: %8.3f %8.3f %8.3f", pos[0], pos[1], pos[2]);
 		sprintf(fDiS, "facing: %8.3f %8.3f %8.3f", fDir[0], fDir[1], fDir[2]);
 		sprintf(uDiS, "up: %8.3f %8.3f %8.3f", uDir[0], uDir[1], uDir[2]);
@@ -359,29 +385,30 @@ struct{
 		text.Write(fDiS, 20, 50, 255, 255, 0);
 		text.Write(uDiS, 20, 65, 255, 255, 0);
 
-		char tts[256];
-		if (is_end == 2){
-			sprintf(tts, "MISSION COMPLETE");
-			text.Write(tts, 300, 400, 255, 255, 0);
-			sprintf(tts, "PRESS L TO CONTINUE");
-			text.Write(tts, 300, 415, 255, 255, 0);
-		}
-		else if (is_end == 1){
-			sprintf(tts, "MISSION FAILED");
-			text.Write(tts, 300, 400, 255, 255, 0);
-			sprintf(tts, "PRESS L TO CONTINUE");
-			text.Write(tts, 300, 415, 255, 255, 0);
-		}
-		else{
-			sprintf(tts, "mainC.aID = %d", mainC.aID);
-			text.Write(tts, 20, 95 + 15 * (-1), 255, 255, 0);
+		char ts[256];
+		if (is_end == 0){
 			for (int i = 0; i < SZ(allBattleC); i++){
 				BattleC&battleC = *allBattleC[i];
-				sprintf(tts, "%s life = %d, aid = %d, dis2main = %.3f", battleC.name, battleC.life, battleC.aID, battleC.Cdis(mainC));
-				text.Write(tts, 20, 95 + 15 * i, 255, 255, 0);
+				sprintf(ts, "%s life = %d, aid = %d, dis2main = %.3f", battleC.name, battleC.life, battleC.aID, battleC.Cdis(mainC));
+				text.Write(ts, 20, 95 + 15 * i, 255, 255, 0);
 			}
 		}
+		text.End();
 
+		text.ID(textID2);
+		text.Begin(vID);
+		if (is_end == 2){
+			sprintf(ts, "MISSION COMPLETE");
+			text.Write(ts, 200, 380, 255, 255, 0);
+			sprintf(ts, "PRESS L TO CONTINUE");
+			text.Write(ts, 200, 420, 255, 255, 0);
+		}
+		else if (is_end == 1){
+			sprintf(ts, "MISSION FAILED");
+			text.Write(ts, 200, 380, 255, 255, 0);
+			sprintf(ts, "PRESS L TO CONTINUE");
+			text.Write(ts, 200, 420, 255, 255, 0);
+		}
 		text.End();
 	}
 }FM;

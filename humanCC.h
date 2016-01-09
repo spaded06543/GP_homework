@@ -34,10 +34,13 @@ struct HumanCC : public BattleC {
 		else if (curpID == damnID){
 			curpID = want_to_move() ? runnID : idleID;
 		}
+		else if (curpID == defeID && defe_time >= 60){
+			curpID = want_to_move() ? runnID : idleID;
+		}
 	}
 	void gen_mov(vector<BattleC*>&allBattleC, OBJECTid tID){
-		BOOL4 can_move = curpID != dieeID && curpID != damnID && curpID != attnID && curpID != aimmID;
-		BOOL4 can_turn = curpID != dieeID && curpID != damnID;
+		BOOL4 can_move = curpID == runnID;
+		BOOL4 can_turn = curpID == runnID || curpID == attnID || curpID == aimmID;
 		if (curpID == aimmID){
 			BattleC*target = find_face_target(ALL(allBattleC));
 			if (target != NULL){

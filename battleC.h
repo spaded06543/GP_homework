@@ -65,6 +65,14 @@ char sAimm[TYPESOFC][64] = {
 	"CombatIdle",
 	"CombatIdle"
 };
+char sDefe[TYPESOFC][64] = {
+	"Defence",
+	"guard",
+	"Defence",
+	"Defence",
+	"Defence",
+	"Defence"
+};
 struct cas{
 	int life;
 	dou speed;
@@ -72,12 +80,12 @@ struct cas{
 	dou attnR, attnT;
 };
 cas CASL[TYPESOFC] = {
-	cas({ 300, +6, 30, 20, 140, 75 }),
+	cas({ 300, +6, 30, 20, 120, 50 }),
 	cas({ 200, 12, 20, 20, 140, 25 }),
-	cas({ +30, +9, 10, 20, 140, 25 }),
-	cas({ +75, +9, 15, 20, 140, 25 }),
-	cas({ +50, 12, 10, 20, 140, 25 }),
-	cas({ 123, +6, 20, 20, 140, 25 })
+	cas({ +30, +9, 10, 20, 120, 25 }),
+	cas({ +75, +9, 15, 20, +70, 50 }),
+	cas({ +50, 12, 10, 20, +70, 25 }),
+	cas({ 123, +6, 20, 20, 120, 25 })
 };
 unordered_map<string, int>my_cid;
 void ini_actions_name(){
@@ -93,10 +101,11 @@ struct BattleC : public FnCharacter {
 	dou speed;
 	int attnD, attnPT;
 	dou attnR, attnT;
-	int dead_time, wudi_time, play_time;
+	int defe_time, wudi_time, play_time;
 	char name[20];
+	int ctype;
 	CHARACTERid aID;
-	ACTIONid attnID, idleID, runnID, damnID, dieeID, curpID, aimmID;  // those actions
+	ACTIONid attnID, idleID, runnID, damnID, dieeID, curpID, aimmID, defeID;  // those actions
 	int AItype;//0 human, 1 random
 	int group;
 	BattleC(){}
@@ -107,10 +116,10 @@ struct BattleC : public FnCharacter {
 			fprintf(stderr, "no this character %s!", name);
 		}
 		assert(beOK);
-		int cid = my_cid[name];
-		FySetModelPath(sPath[cid]);
-		FySetTexturePath(sPath[cid]);
-		FySetCharacterPath(sPath[cid]);
+		int ctype = my_cid[name];
+		FySetModelPath(sPath[ctype]);
+		FySetTexturePath(sPath[ctype]);
+		FySetCharacterPath(sPath[ctype]);
 		FnScene scene; scene.ID(sID);
 		FnObject terrain; terrain.ID(tRID);
 		ID(aID = scene.LoadCharacter(name));
@@ -121,22 +130,23 @@ struct BattleC : public FnCharacter {
 			fprintf(stderr, "load %s failed!", name);
 		}
 		assert(beOK);
-		attnID = GetBodyAction(NULL, sAttN[cid]);
-		idleID = GetBodyAction(NULL, sIdle[cid]);
-		runnID = GetBodyAction(NULL, sRunn[cid]);
-		damnID = GetBodyAction(NULL, sDamN[cid]);
-		dieeID = GetBodyAction(NULL, sDiee[cid]);
-		aimmID = GetBodyAction(NULL, sAimm[cid]);
+		attnID = GetBodyAction(NULL, sAttN[ctype]);
+		idleID = GetBodyAction(NULL, sIdle[ctype]);
+		runnID = GetBodyAction(NULL, sRunn[ctype]);
+		damnID = GetBodyAction(NULL, sDamN[ctype]);
+		dieeID = GetBodyAction(NULL, sDiee[ctype]);
+		aimmID = GetBodyAction(NULL, sAimm[ctype]);
+		defeID = GetBodyAction(NULL, sDefe[ctype]);
 		curpID = idleID;
 		SetCurrentAction(NULL, 0, idleID);
 		Play(START, 0.0f, FALSE, TRUE);
-		life = CASL[cid].life;
-		speed = CASL[cid].speed;
-		attnD = CASL[cid].attnD;
-		attnPT = CASL[cid].attnPT;
-		attnR = CASL[cid].attnR;
-		attnT = CASL[cid].attnT;
-		dead_time = wudi_time = play_time = 0;
+		life = CASL[ctype].life;
+		speed = CASL[ctype].speed;
+		attnD = CASL[ctype].attnD;
+		attnPT = CASL[ctype].attnPT;
+		attnR = CASL[ctype].attnR;
+		attnT = CASL[ctype].attnT;
+		defe_time = wudi_time = play_time = 0;
 		group = group_;
 		AItype = AItype_;
 	}
@@ -151,29 +161,37 @@ struct BattleC : public FnCharacter {
 	}
 	void Nattack(BattleC&beatenC){
 		if (beatenC.life == 0 || beatenC.wudi_time != 0 || beatenC.group == group)return;
-		dot a_pos, b_pos, fDi;
+		dot a_pos, b_pos, a_fDi;
 		GetPosition(&a_pos, NULL);
-		GetDirection(&fDi, NULL);
-		fDi = dan(fDi);
+		GetDirection(&a_fDi, NULL);
+		a_fDi = dan(a_fDi);
 		beatenC.GetPosition(&b_pos, NULL);
 		dot dd = b_pos - a_pos;
 		dou disab = my_dis(dd);
 		if (sgn(disab) == 0)return;//too close
 		dot dandd = dan(dd);
-		dou sint = my_dis(fDi*dandd);
-		BOOL4 isbeaten = fDi%dandd >= 0 && disab < attnR && (asin(fabs(sint)) * 180 / pi) < attnT;
-		if (isbeaten == 0)return;
-		//decrease life
-		beatenC.life = max(beatenC.life - attnD, 0);
-		//turn and move back
-		beatenC.SetDirection(&((-1)*dandd), NULL);
-		beatenC.SetPosition(&(b_pos + 5 * dandd));
-		//set Act
-		beatenC.SetCurrentAction(NULL, 0, beatenC.curpID = (beatenC.life <= 0 ? beatenC.dieeID : beatenC.damnID));
-		beatenC.Play(ONCE, 0.0f, FALSE, TRUE);
-		//increase timer
-		if (beatenC.life>0)beatenC.wudi_time = 34;
-		beatenC.play_time = 24;
+		dou sint = my_dis(a_fDi*dandd);
+		BOOL4 is_beaten = a_fDi%dandd >= 0 && disab < attnR && (asin(fabs(sint)) * 180 / pi) < attnT;
+		if (is_beaten == 0)return;
+		BOOL4 is_defenc = 0;
+		if (beatenC.curpID == beatenC.defeID && ctype != 2){
+			dot b_fDi;
+			beatenC.GetDirection(&b_fDi, NULL);
+			is_defenc = (b_fDi%dandd < 0);
+		}
+		if (is_defenc){
+			beatenC.life = max(beatenC.life - min(attnD / 10, beatenC.life - 1), 0);
+			beatenC.SetPosition(&(b_pos + 5 * dandd));
+		}
+		else{
+			beatenC.life = max(beatenC.life - attnD, 0);
+			beatenC.SetDirection(&((-1)*dandd), NULL);
+			beatenC.SetPosition(&(b_pos + 5 * dandd));
+			beatenC.SetCurrentAction(NULL, 0, beatenC.curpID = (beatenC.life <= 0 ? beatenC.dieeID : beatenC.damnID));
+			beatenC.Play(ONCE, 0.0f, FALSE, TRUE);
+			beatenC.play_time = 15;
+		}
+		if (beatenC.life > 0)beatenC.wudi_time = 34;
 	}
 	template<class T>
 	BattleC* find_target(T st, T ed){
