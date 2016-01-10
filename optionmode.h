@@ -6,6 +6,7 @@ struct{
 	TEXTid textID;
 	int option;
 	int key_select;
+	float volume;
 	
 	void load(){
 		textID = FAILED_ID;
@@ -16,6 +17,7 @@ struct{
 		textID = FyCreateText("Trebuchet MS3", 20, FALSE, FALSE);
 		option = 0;
 		key_select = -1;
+		volume = 0.5;
 		FnScene scene;
 		
 		sID = FyCreateScene(1);

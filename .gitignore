@@ -12,7 +12,8 @@ source/
 
 Work/*
 !Work/Data/
-
+!Work/Bgm/
+!Work/Bgm/*
 Work/Data/*
 !Work/Data/NTU6/
 

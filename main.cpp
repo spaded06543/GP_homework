@@ -28,12 +28,14 @@ int oldX, oldY, oldXM, oldYM, oldXMM, oldYMM;
 #include "fightmode.h"
 
 OBJECTid cID;
-int now_mode = 1;
+AUDIOid BGMid;
+int now_mode = 1, pre_mode = 0;
 //1 menu mode
 //2 option mode
 //3 select mode
 //4 load to fight mode
 //5 fight mode
+//pre mode 0 -- bgm001, 1 -- bgm002
 
 // hotkey callbacks
 void QuitGame ( BYTE, BOOL4 );
@@ -42,6 +44,7 @@ void Movement ( BYTE, BOOL4 );
 // timer callbacks
 void GameAI ( int );
 void RenderIt ( int );
+void PlaySound(int skip);
 
 // mouse callbacks
 void InitPivot ( int, int );
@@ -67,6 +70,11 @@ void FyMain ( int argc, char **argv )
   SM.load();
   FM.load();
   cID = MM.cID;
+  FnAudio sd;
+  BGMid = FyCreateAudio();
+  sd.ID(BGMid);
+  sd.Load("Bgm/bgm001");
+  sd.SetVolume(OM.volume);
   // set Hotkeys
   FyDefineHotKey ( FY_ESCAPE, QuitGame, FALSE );  // escape for quiting the game
   FyDefineHotKey ( FY_UP, Movement, FALSE );      // Up for moving forward
@@ -86,11 +94,34 @@ void FyMain ( int argc, char **argv )
   // bind timers, frame rate = 30 fps
   FyBindTimer ( 0, FPS, GameAI, TRUE );
   FyBindTimer ( 1, FPS, RenderIt, TRUE );
-
+  FyBindTimer(2, FPS, PlaySound, TRUE);
   // invoke the system
   FyInvokeFly ( TRUE );
 }
-
+/*-------------------------------------------------------------
+Play background music && loop
+--------------------------------------------------------------*/
+void PlaySound(int skip){
+	FnAudio sd;
+	sd.ID(BGMid);
+	if (now_mode == 5 && pre_mode == 0 ){
+		sd.Stop();
+		if (sd.Load("Bgm/bgm002") == FALSE){
+			exit(3);
+		}
+		pre_mode = 1;
+	}
+	else if (pre_mode == 1 && now_mode == 1){
+		sd.Stop();
+		if (sd.Load("Bgm/bgm001") == FALSE){
+			exit(3);
+		}
+		pre_mode = 0;
+	}
+	if (!(sd.IsPlaying())){
+		sd.Play(LOOP);
+	}
+}
 /*-------------------------------------------------------------
   30fps timer callback in fixed frame rate for major game loop
  --------------------------------------------------------------*/
