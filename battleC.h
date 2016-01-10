@@ -195,13 +195,13 @@ struct BattleC : public FnCharacter {
 		}
 		if (beatenC.life > 0)beatenC.wudi_time = 34;
 		FnScene scene(sID);
-		if (gFXID != NULL) {
-			scene.DeleteGameFXSystem(gFXID);
+		if (beatenC.gFXID != NULL) {
+			scene.DeleteGameFXSystem(beatenC.gFXID);
 		}
-		gFXID = scene.CreateGameFXSystem();
-		FnGameFXSystem gxS(gFXID);
-		if (gFXID != FAILED_ID){
-			BOOL4 beOK = gxS.Load("SpellHome_01", TRUE);
+		beatenC.gFXID = scene.CreateGameFXSystem();
+		FnGameFXSystem gxS(beatenC.gFXID);
+		if (beatenC.gFXID != FAILED_ID){
+			BOOL4 beOK = gxS.Load("Lyubu_atk01", TRUE);
 			if (beOK) {
 				gxS.SetPlayLocation(&b_pos);
 			}
