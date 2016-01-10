@@ -5,12 +5,11 @@ struct HumanCC : public BattleC {
 	OBJECTid cID;
 	HumanCC() {}
 	HumanCC(const char* name_, SCENEid sID, ROOMid tRID, dot pos, dot fDi, dot uDi, int group_) : BattleC(name_, sID, tRID, pos, fDi, uDi, group_, 0){
-		FnScene scene;scene.ID(sID);
+		FnScene scene(sID);
 		// translate the camera
 		cID = scene.CreateObject(CAMERA);
 
-		FnCamera camera;
-		camera.ID(cID);
+		FnCamera camera(cID);
 		camera.SetNearPlane(5.0f);
 		camera.SetFarPlane(100000.0f);
 

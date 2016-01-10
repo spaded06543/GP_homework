@@ -109,11 +109,14 @@ struct BattleC : public FnCharacter {
 	char name[20];
 	int ctype;
 	CHARACTERid aID;
+	SCENEid sID;
+	GAMEFX_SYSTEMid gFXID;
 	ACTIONid attnID, idleID, runnID, damnID, dieeID, curpID, aimmID, defeID;  // those actions
 	int AItype;//0 human, 1 random
 	int group;
 	BattleC(){}
-	BattleC(const char* name_, SCENEid sID, ROOMid tRID, dot pos, dot fDi, dot uDi, int group_, int AItype_ = 1){
+	BattleC(const char* name_, SCENEid sID_, ROOMid tRID, dot pos, dot fDi, dot uDi, int group_, int AItype_ = 1){
+		gFXID = FAILED_ID;
 		strcpy(name, name_);
 		BOOL4 beOK = my_cid.count(name);
 		if (beOK == 0){
@@ -124,8 +127,8 @@ struct BattleC : public FnCharacter {
 		FySetModelPath(sPath[ctype]);
 		FySetTexturePath(sPath[ctype]);
 		FySetCharacterPath(sPath[ctype]);
-		FnScene scene; scene.ID(sID);
-		FnObject terrain; terrain.ID(tRID);
+		FnScene scene(sID = sID_);
+		FnObject terrain(tRID);
 		ID(aID = scene.LoadCharacter(name));
 		SetDirection(&fDi, &uDi);
 		SetTerrainRoom(tRID, 10.0f);
@@ -191,6 +194,19 @@ struct BattleC : public FnCharacter {
 			beatenC.play_time = 15;
 		}
 		if (beatenC.life > 0)beatenC.wudi_time = 34;
+		FnScene scene(sID);
+		if (gFXID != NULL) {
+			scene.DeleteGameFXSystem(gFXID);
+		}
+		gFXID = scene.CreateGameFXSystem();
+		FnGameFXSystem gxS(gFXID);
+		if (gFXID != FAILED_ID){
+			BOOL4 beOK = gxS.Load("SpellHome_01", TRUE);
+			if (beOK) {
+				gxS.SetPlayLocation(&b_pos);
+			}
+			assert(beOK);
+		}
 	}
 	template<class T>
 	BattleC* find_target(T st, T ed){
@@ -209,7 +225,7 @@ struct BattleC : public FnCharacter {
 		GetDirection(&fDi,NULL);
 		for (; st != ed; st++)if ((*st)->life){
 			dot dvc = Cdvc(*(*st));
-			if (my_dis(dvc) < eps || my_dis(dvc) >= attnR || fDi % dvc < 0)continue;
+			if (my_dis(dvc) < eps || my_dis(dvc) >= 2 * attnR || fDi % dvc < 0)continue;
 			dou sint = my_dis(fDi*dan(dvc));
 			dou narc = fabs(asin(sint));
 			if (narc >= attnT)continue;

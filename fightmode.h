@@ -44,9 +44,10 @@ struct{
 		FySetModelPath("Data\\NTU6\\Scenes");
 		FySetTexturePath("Data\\NTU6\\Scenes\\Textures");
 		FySetScenePath("Data\\NTU6\\Scenes");
+		FySetGameFXPath("Data\\NTU6\\FX0");
 
 		sID = FyCreateScene(10);
-		FnScene scene; scene.ID(sID);
+		FnScene scene(sID);
 		cID = scene.CreateObject(CAMERA);
 		// load the scene
 		FM.Renderload("NOW loading...  10% Scene"); FySwapBuffers();
@@ -54,22 +55,19 @@ struct{
 		scene.SetAmbientLights(1.0f, 1.0f, 1.0f, 0.6f, 0.6f, 0.6f);
 		
 		sID2 = FyCreateScene(1);
-		FnScene s_scene;
-		s_scene.ID(sID2);
+		FnScene s_scene(sID2);
 		s_scene.SetSpriteWorldSize(800, 600);
 
 		// load the terrain
 		FM.Renderload("NOW loading...  20% terrain"); FySwapBuffers();
 		tID = scene.CreateObject(OBJECT);
-		FnObject terrain;
-		terrain.ID(tID);
+		FnObject terrain(tID);
 		BOOL beOK1 = terrain.Load("terrain");
 		terrain.Show(FALSE);
 
 		// set terrain environment
 		tRID = scene.CreateRoom(SIMPLE_ROOM, 10);
-		FnRoom room;
-		room.ID(tRID);
+		FnRoom room(tRID);
 		room.AddObject(tID);
 
 		// load the character
@@ -261,6 +259,19 @@ struct{
 				is_end = 2;
 			}
 		}
+		// play FX
+		for (BattleC* pointer : allBattleC){
+			BattleC&p = *pointer;
+			if (p.gFXID != FAILED_ID) {
+				FnGameFXSystem gxS(p.gFXID);
+				BOOL4 beOK = gxS.Play((float)skip, ONCE);
+				if (!beOK) {
+					FnScene scene(sID);
+					scene.DeleteGameFXSystem(p.gFXID);
+					p.gFXID = FAILED_ID;
+				}
+			}
+		}
 	}
 	int Movement(BYTE code, BOOL4 value){
 		if (mainC.play_time != 0)return 5;
@@ -333,7 +344,6 @@ struct{
 		return 5;
 	}
 	void RenderIt(int skip){
-		FnViewport vp;
 		
 		int P1HP_length = int(300.0 * float(mainC.life) / float(P1HP_max));
 		int P2HP_length = int(300.0 * float((*P2_pointer).life) / float(P2HP_max));
@@ -351,13 +361,12 @@ struct{
 		sp.SetSize(P2HP_loseL, 30);
 		
 		// render the whole scene
-		vp.ID(vID);
+		FnViewport vp(vID);
 		vp.Render3D(cID, TRUE, TRUE);
 		vp.RenderSprites(sID2, FALSE, TRUE);
 		if (tRID == FAILED_ID)return;
 		// get camera's data
-		FnCamera camera;
-		camera.ID(cID);
+		FnCamera camera(cID);
 
 		float pos[3], fDir[3], uDir[3];
 		camera.GetPosition(pos);
@@ -376,8 +385,7 @@ struct{
 		if (frame >= 1000) {
 			frame = 0;
 		}
-		FnText text;
-		text.ID(textID);
+		FnText text(textID);
 
 		text.Begin(vID);
 		text.Write(S, 20, 20, 255, 0, 0);
@@ -396,7 +404,12 @@ struct{
 			for (int i = 0; i < SZ(allBattleC); i++){
 				BattleC&p = *allBattleC[i];
 				sprintf(ts, "%s life = %d, aid = %d, dis2main = %.3f, ctype = %d", p.name, p.life, p.aID, p.Cdis(mainC),p.ctype);
-				text.Write(ts, 20, 95 + 15 * i, 255, 255, 0);
+				text.Write(ts, 20, 95 + 15 * (2 * i + 0), 255, 255, 0);
+				float xyz[3],ppp[3];
+				vp.HitPosition(tID, cID, 100, 200, xyz);
+				p.GetPosition(ppp, NULL);
+				sprintf(ts, "GFXid = %d, (%f %f %f), (%f %f %f)\n", p.gFXID, ppp[0], ppp[1], ppp[2], xyz[0], xyz[1], xyz[2]);
+				text.Write(ts, 20, 95 + 15 * (2 * i + 1), 255, 255, 0);
 			}
 		}
 		text.End();
