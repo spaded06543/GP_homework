@@ -77,16 +77,19 @@ char sDefe[TYPESOFC][64] = {
 struct cas{
 	int life;
 	dou speed;
-	int attnD, attnPT;
+	int attnD, attnPT, attnST, attnED;
 	dou attnR, attnT;
+	tuple<int,dou,int,int,int,int,dou,dou> cas_tie(){
+		return tie(life, speed, attnD, attnPT, attnST, attnED, attnR, attnT);
+	}
 };
 cas CASL[TYPESOFC] = {
-	cas({ 300, +6, 30, 20, 120, 50 }),
-	cas({ 200, 12, 20, 20, 140, 25 }),
-	cas({ +30, +9, 10, 20, 120, 25 }),
-	cas({ +75, +9, 15, 20, +70, 50 }),
-	cas({ +50, 12, 10, 20, +70, 25 }),
-	cas({ 123, +6, 20, 20, 120, 25 })
+	cas({ 300, +6, 30, 35, 10, 15, 120, 50 }),
+	cas({ 200, 12, 20, 20, +5, 10, 140, 25 }),
+	cas({ +30, +9, 10, 20, +5, 10, 120, 25 }),
+	cas({ +75, +9, 15, 20, +5, 10, +70, 50 }),
+	cas({ +50, 12, 10, 20, +5, 10, +70, 25 }),
+	cas({ 123, +6, 20, 20, +5, 10, 120, 25 })
 };
 unordered_map<string, int>my_cid;
 void ini_actions_name(){
@@ -100,9 +103,9 @@ void ini_actions_name(){
 struct BattleC : public FnCharacter {
 	int life;
 	dou speed;
-	int attnD, attnPT;
+	int attnD, attnPT, attnST, attnED;
 	dou attnR, attnT;
-	int defe_time, wudi_time, play_time;
+	int attn_time, defe_time, wudi_time, play_time;
 	char name[20];
 	int ctype;
 	CHARACTERid aID;
@@ -117,7 +120,7 @@ struct BattleC : public FnCharacter {
 			fprintf(stderr, "no this character %s!", name);
 		}
 		assert(beOK);
-		int ctype = my_cid[name];
+		ctype = my_cid[name];
 		FySetModelPath(sPath[ctype]);
 		FySetTexturePath(sPath[ctype]);
 		FySetCharacterPath(sPath[ctype]);
@@ -141,13 +144,8 @@ struct BattleC : public FnCharacter {
 		curpID = idleID;
 		SetCurrentAction(NULL, 0, idleID);
 		Play(START, 0.0f, FALSE, TRUE);
-		life = CASL[ctype].life;
-		speed = CASL[ctype].speed;
-		attnD = CASL[ctype].attnD;
-		attnPT = CASL[ctype].attnPT;
-		attnR = CASL[ctype].attnR;
-		attnT = CASL[ctype].attnT;
-		defe_time = wudi_time = play_time = 0;
+		tie(life, speed, attnD, attnPT, attnST, attnED, attnR, attnT) = CASL[ctype].cas_tie();
+		attn_time = defe_time = wudi_time = play_time = 0;
 		group = group_;
 		AItype = AItype_;
 	}

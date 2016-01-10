@@ -7,7 +7,7 @@ HumanCC mainC;
 SimpleC donzos[20];
 #define FIGHT1P 1
 #define FIGHT2P 2 //todo
-#define FIGHT32 3 //todo
+#define FIGHTMP 3
 struct{
 	VIEWPORTid vID;                     // the major viewport
 	SCENEid sID, sID2;                  // the 3D scene and scene for sprites
@@ -73,24 +73,29 @@ struct{
 		room.AddObject(tID);
 
 		// load the character
-		FM.Renderload("NOW loading...  30% characters"); FySwapBuffers();
 		allBattleC.clear();
-		const int DN = TYPESOFC, RN = DN - 2 + (string(p1) == p2);
-		//load all
-		for (int i = 0; i < DN; i++)if (cname[i] != p1 && cname[i] != p2){
-			dot fDi = dot(cos(pi*i / RN), sin(pi*i / RN), 0);
-			dot uDi = dot(0, 0, 1);
-			dot pos = dot(3569.0f, -3208.0f, 1000.0f) - 500 * dot(0, 1, 0) - 150 * fDi;
-			donzos[i] = SimpleC(cname[i].c_str(), sID, tRID, pos, fDi, uDi, 1);
-			allBattleC.push_back(&donzos[i]);
-		}
-		//load all
-		for (int i = DN; i < 2*DN; i++)if (cname[i-DN] != p1 && cname[i-DN] != p2){
-			dot fDi = dot(cos(pi*i / RN), sin(pi*i / RN), 0);
-			dot uDi = dot(0, 0, 1);
-			dot pos = dot(3569.0f, -3208.0f, 1000.0f) - 150 * fDi;
-			donzos[i] = SimpleC(cname[i-DN].c_str(), sID, tRID, pos, fDi, uDi, 0);
-			allBattleC.push_back(&donzos[i]);
+		int cc = 0;
+		if (mode == FIGHTMP){
+			FM.Renderload("NOW loading...  30% xiaobing"); FySwapBuffers();
+			const int DN = TYPESOFC, RN = DN - 2 + (string(p1) == p2);
+			//load all
+			for (int i = 0; i < DN; i++)if (cname[i] != p1 && cname[i] != p2){
+				dot fDi = dot(cos(pi*i / RN), sin(pi*i / RN), 0);
+				dot uDi = dot(0, 0, 1);
+				dot pos = dot(3569.0f, -3208.0f, 1000.0f) - 500 * dot(0, 1, 0) - 150 * fDi;
+				donzos[cc] = SimpleC(cname[i].c_str(), sID, tRID, pos, fDi, uDi, 1);
+				allBattleC.push_back(&donzos[cc]);
+				cc++;
+			}
+			//load all
+			for (int i = DN; i < 2 * DN; i++)if (cname[i - DN] != p1 && cname[i - DN] != p2){
+				dot fDi = dot(cos(pi*i / RN), sin(pi*i / RN), 0);
+				dot uDi = dot(0, 0, 1);
+				dot pos = dot(3569.0f, -3208.0f, 1000.0f) - 150 * fDi;
+				donzos[cc] = SimpleC(cname[i - DN].c_str(), sID, tRID, pos, fDi, uDi, 0);
+				allBattleC.push_back(&donzos[cc]);
+				cc++;
+			}
 		}
 		FM.Renderload("NOW loading...  40% main characters"); FySwapBuffers();
 		//load 2P
@@ -98,10 +103,11 @@ struct{
 			dot fDi = dot(0, 1, 0);
 			dot uDi = dot(0, 0, 1);
 			dot pos = dot(3569.0f, -3208.0f, 1000.0f) - 1000 * fDi;
-			donzos[2*DN] = SimpleC(p2, sID, tRID, pos, fDi, uDi, 1);
-			P2_pointer = &donzos[2*DN];
-			P2HP_max = donzos[2*DN].life;
-			allBattleC.push_back(&donzos[2*DN]);
+			donzos[cc] = SimpleC(p2, sID, tRID, pos, fDi, uDi, 1);
+			P2_pointer = &donzos[cc];
+			P2HP_max = donzos[cc].life;
+			allBattleC.push_back(&donzos[cc]);
+			cc++;
 		}
 		//load 1P
 		{
@@ -190,10 +196,12 @@ struct{
 	void GameAI(int skip){
 		// update timer
 		for (BattleC* pointer : allBattleC){
-			BattleC&battleC = *pointer;
-			battleC.defe_time = (battleC.curpID == battleC.defeID) * (battleC.defe_time + skip);
-			battleC.wudi_time = max(battleC.wudi_time - skip, 0);
-			battleC.play_time = max(battleC.play_time - skip, 0);
+			BattleC&p = *pointer;
+			p.attn_time = (p.curpID == p.attnID) * (p.attn_time + skip);
+			if (p.attn_time >= p.attnPT)p.attn_time -= p.attnPT;
+			p.defe_time = (p.curpID == p.defeID) * (p.defe_time + skip);
+			p.wudi_time = max(p.wudi_time - skip, 0);
+			p.play_time = max(p.play_time - skip, 0);
 		}
 		// character generate action
 		for (BattleC* pointer : allBattleC){
@@ -203,7 +211,7 @@ struct{
 			if (oldpID == battleC.curpID)continue;
 			battleC.SetCurrentAction(0, NULL, battleC.curpID, 5.0f);
 			battleC.Play(START, 0.0f, FALSE, TRUE);
-			if (battleC.curpID == battleC.attnID){
+			if (battleC.curpID == battleC.attnID && battleC.AItype != 0){
 				battleC.play_time = battleC.attnPT;
 			}
 			else if (oldpID == battleC.defeID){
@@ -221,8 +229,7 @@ struct{
 		}
 		// move position
 		for (BattleC* pointer : allBattleC){
-			BattleC& battleC = *pointer;
-			battleC.gen_mov(allBattleC, tID);
+			(*pointer).gen_mov(allBattleC, tID);
 		}
 		// play character pose
 		for (BattleC* pointer : allBattleC){
@@ -232,11 +239,11 @@ struct{
 		}
 		// attack judge
 		for (BattleC* pointer : allBattleC){
-			BattleC&battleC = *pointer;
-			BOOL4 is_atking = battleC.curpID == battleC.attnID;
-			if (is_atking == 0)continue;
+			BattleC&p = *pointer;
+			BOOL4 is_atk_point = p.curpID == p.attnID && p.attnST <= p.attn_time && p.attn_time < p.attnED;
+			if (is_atk_point == 0)continue;
 			for (BattleC* btC : allBattleC){
-				battleC.Nattack(*btC);
+				p.Nattack(*btC);
 			}
 		}
 		// judge end
@@ -387,8 +394,8 @@ struct{
 		char ts[256];
 		if (is_end == 0){
 			for (int i = 0; i < SZ(allBattleC); i++){
-				BattleC&battleC = *allBattleC[i];
-				sprintf(ts, "%s life = %d, aid = %d, dis2main = %.3f", battleC.name, battleC.life, battleC.aID, battleC.Cdis(mainC));
+				BattleC&p = *allBattleC[i];
+				sprintf(ts, "%s life = %d, aid = %d, dis2main = %.3f, ctype = %d", p.name, p.life, p.aID, p.Cdis(mainC),p.ctype);
 				text.Write(ts, 20, 95 + 15 * i, 255, 255, 0);
 			}
 		}

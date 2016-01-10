@@ -27,15 +27,17 @@ struct HumanCC : public BattleC {
 			FyCheckHotKeyStatus(FY_LEFT) ||
 			FyCheckHotKeyStatus(FY_DOWN);
 	}
+	ACTIONid want_to_do(){
+		if (FyCheckHotKeyStatus(FY_Z))return attnID;
+		if (FyCheckHotKeyStatus(FY_X))return aimmID;
+		return want_to_move() ? runnID : idleID;
+	}
 	void gen_act(vector<BattleC*>&allBattleC){
 		if (play_time != 0 || curpID == dieeID){
 			return;
 		}
-		else if (curpID == damnID){
-			curpID = want_to_move() ? runnID : idleID;
-		}
-		else if (curpID == defeID && defe_time >= 60){
-			curpID = want_to_move() ? runnID : idleID;
+		else if (curpID == damnID || (curpID == defeID && defe_time >= 60)){
+			curpID = want_to_do();
 		}
 	}
 	void gen_mov(vector<BattleC*>&allBattleC, OBJECTid tID){
