@@ -1,4 +1,3 @@
-#include<unordered_map>
 #include"humanCC.h"
 #include"simpleC.h"
 #define FMLOGF ".\\fightmodelog.txt"

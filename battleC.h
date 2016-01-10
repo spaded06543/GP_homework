@@ -1,3 +1,4 @@
+#include<unordered_map>
 #define _battleC_h_
 #define TYPESOFC 6
 #define BCLOGF ".\\battleClog.txt"

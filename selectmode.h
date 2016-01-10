@@ -1,32 +1,13 @@
 #include "../Include/FlyWin32.h"
+#ifndef _battleC_h_
+#define TYPESOFC 6
+#include "battleC.h"
+#endif
 #include <cstring>
 #include <cstdio>
 #include <iostream>
 #include <vector>
-#define TYPESOFC 6
-string character_name[TYPESOFC] = {
-	"Donzo2",
-	"Lyubu2",
-	"Robber02",
-	"Footman01",
-	"Sorcerer01",
-	"WarLord01"
-};
 
-struct info{
-	int life;
-	dou speed;
-	int attnD, attnPT;
-	dou attnR, attnT;
-};
-info INFO[TYPESOFC] = {
-	info({ 300, +6, 30, 20, 140, 75 }),
-	info({ 200, 12, 20, 20, 140, 25 }),
-	info({ +30, +9, 10, 20, 140, 25 }),
-	info({ +75, +9, 15, 20, 140, 25 }),
-	info({ +50, 12, 10, 20, 140, 25 }),
-	info({ 123, +6, 20, 20, 140, 25 })
-};
 struct{
 	VIEWPORTid vID;
 	SCENEid sID;
@@ -133,6 +114,7 @@ struct{
 				}
 			}
 		}
+		if (ret == 4) if_select = 0;
 		return ret;
 	}
 	
@@ -173,15 +155,15 @@ struct{
 		if(if_select > 0){
 			sprintf(S, "Choose the \"enemy\" you want\nPress \"Z\" to select character.\n Press \"X\" Back to main menu.\n");
 			sprintf(character_info, "Enemy : %s\nAttack : \t%f\nBlood : \t%d\nSpeed : \t%d\n", 
-				character_name[select_enemy].c_str(), INFO[select_enemy].speed,
-				INFO[select_enemy].life, INFO[select_enemy].attnD);
+				cname[select_enemy].c_str(), CASL[select_enemy].speed,
+				CASL[select_enemy].life, CASL[select_enemy].attnD);
 			// TODO : need characterinformation	
 		}
 		else{
 			sprintf(S, "Choose the character you want\nPress \"Z\" to select character.\n Press \"X\" Back to main menu.\n");
 			sprintf(character_info, "Character : %s\nAttack : \t%f\nBlood : \t%d\nSpeed : \t%d\n", 
-				character_name[select_character].c_str(), INFO[select_character].speed,
-				INFO[select_character].life, INFO[select_character].attnD);
+				cname[select_character].c_str(), CASL[select_character].speed,
+				CASL[select_character].life, CASL[select_character].attnD);
 			// TODO : need characterinformation
 		}
 		

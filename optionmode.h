@@ -1,7 +1,3 @@
-/*
-Current Options : BGM and SE Volume, Key Setting.
-Maybe more options?
-*/
 #include "../Include/FlyWin32.h"
 struct{
 	VIEWPORTid vID;
