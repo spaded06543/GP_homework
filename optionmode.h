@@ -4,6 +4,7 @@ struct{
 	SCENEid sID;
 	OBJECTid cID, tID, spID;
 	TEXTid textID;
+	AUDIOid BGMid;
 	int option;
 	int key_select;
 	float volume;
@@ -17,9 +18,15 @@ struct{
 		textID = FyCreateText("Trebuchet MS3", 20, FALSE, FALSE);
 		option = 0;
 		key_select = -1;
-		volume = 0.5;
-		FnScene scene;
 		
+		FnAudio sd;
+		BGMid = FyCreateAudio();
+		sd.ID(BGMid);
+		sd.Load("Bgm/bgm001");
+		volume = 0.5;
+		sd.SetVolume(volume);
+		
+		FnScene scene;
 		sID = FyCreateScene(1);
 		scene.ID(sID);
 		scene.SetSpriteWorldSize(800, 600);
@@ -95,8 +102,7 @@ struct{
 		sp.SetImage("Image/Opt_select", 0, NULL, 0, NULL, NULL, MANAGED_MEMORY, false, false);
 		sp.SetPosition(150, 500, 0);
 	}
-	void GameAI(int skip){
-	}
+	void GameAI(int skip){}
 	
 	int Movement(BYTE code, BOOL4 value){
 		int ret = 2;
@@ -107,8 +113,19 @@ struct{
 		}else if (code == FY_UP && option != 3 && value){
 			option -= 1;
 			if (option == 3) option -= 1;
-		}
-		else if (code == FY_Z && option == 2 && value){
+		}else if (code == FY_LEFT && option == 0 && value){
+			FnAudio sd;
+			sd.ID(BGMid);
+			volume -= 0.1;
+			if (volume < 0) volume = 0;
+			sd.SetVolume(volume);
+		}else if (code == FY_RIGHT && option == 0 && value){
+			FnAudio sd;
+			sd.ID(BGMid);
+			volume += 0.1;
+			if (volume > 1) volume = 1;
+			sd.SetVolume(volume);
+		}else if (code == FY_Z && option == 2 && value){
 			option = 3;
 			key_select = 0;
 		}else if (option == 3 && value){
