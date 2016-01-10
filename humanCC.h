@@ -72,7 +72,7 @@ struct HumanCC : public BattleC {
 
 		int hotkey = (int)FyCheckHotKeyStatus(FY_UP) + (int)FyCheckHotKeyStatus(FY_DOWN)
 				   + (int)FyCheckHotKeyStatus(FY_RIGHT) + (int)FyCheckHotKeyStatus(FY_LEFT);
-		float Speed = ( hotkey > 1 )? speed/sqrt(2) : speed;
+		float Speed = ( hotkey > 1 )? speed/dou(sqrt(2)) : speed;
 		// ***** Up *****
 		if (FyCheckHotKeyStatus(FY_UP)) {
 
@@ -90,7 +90,7 @@ struct HumanCC : public BattleC {
 					if ( distance(cam_pos, act_pos ) < dis ) {
 						cam_fDir[0] = act_pos[0] - cam_pos[0];
 						cam_fDir[1] = act_pos[1] - cam_pos[1];
-						cam_fDir[2] = act_pos[2] - cam_pos[2]+42.946793;
+						cam_fDir[2] = act_pos[2] - cam_pos[2]+42.946793f;
 						set_cam_dir(cam_fDir, cam_uDir);
 						camera.SetDirection(cam_fDir, cam_uDir);
 					}
@@ -132,7 +132,7 @@ struct HumanCC : public BattleC {
 
 						cam_fDir[0] = act_pos[0] - o_cam_pos[0];
 						cam_fDir[1] = act_pos[1] - o_cam_pos[1];
-						cam_fDir[2] = act_pos[2] - o_cam_pos[2]+42.946793;
+						cam_fDir[2] = act_pos[2] - o_cam_pos[2]+42.946793f;
 						set_cam_dir(cam_fDir, cam_uDir);
 						camera.SetDirection(cam_fDir, cam_uDir);
 					}
@@ -166,7 +166,7 @@ struct HumanCC : public BattleC {
 				camera.GetPosition(cam_pos);
 				cam_fDir[0] = act_pos[0] - cam_pos[0];
 				cam_fDir[1] = act_pos[1] - cam_pos[1];
-				cam_fDir[2] = act_pos[2] - cam_pos[2]+42.946793;
+				cam_fDir[2] = act_pos[2] - cam_pos[2]+42.946793f;
 				set_cam_dir(cam_fDir, cam_uDir);
 				camera.SetDirection(cam_fDir, cam_uDir);
 			}
@@ -196,7 +196,7 @@ struct HumanCC : public BattleC {
 				camera.GetPosition(cam_pos);
 				cam_fDir[0] = act_pos[0] - cam_pos[0];
 				cam_fDir[1] = act_pos[1] - cam_pos[1];
-				cam_fDir[2] = act_pos[2] - cam_pos[2]+42.946793;
+				cam_fDir[2] = act_pos[2] - cam_pos[2]+42.946793f;
 				set_cam_dir(cam_fDir, cam_uDir);
 				camera.SetDirection(cam_fDir, cam_uDir);
 			}

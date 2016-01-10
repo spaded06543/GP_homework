@@ -116,13 +116,13 @@ struct{
 		}else if (code == FY_LEFT && option == 0 && value){
 			FnAudio sd;
 			sd.ID(BGMid);
-			volume -= 0.1;
+			volume -= 0.1f;
 			if (volume < 0) volume = 0;
 			sd.SetVolume(volume);
 		}else if (code == FY_RIGHT && option == 0 && value){
 			FnAudio sd;
 			sd.ID(BGMid);
-			volume += 0.1;
+			volume += 0.1f;
 			if (volume > 1) volume = 1;
 			sd.SetVolume(volume);
 		}else if (code == FY_Z && option == 2 && value){
