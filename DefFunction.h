@@ -7,9 +7,13 @@
 #define DISTANCE_P 750.0f         // default dis between (projection of cam on xy plane) & act
 #define DEFAULT_HEIGHT 105.0f     // default cam height
 #define DEFAULT_DEGREE 4.7f       // default cam look down degree
+#define MAX_HEIGHT      250.0f
 
 #define ACT_DEGREEperFRAME 0.25f  // act turned degree per frame
 #define CAMUPDEGREE 1.0f          // cam raise angle if hit terrain
+
+#define POS_APPROACH_MIN  0.5
+#define MAX_APPROACH      50
 
 // used in function set_act_dir
 #define UP    0
