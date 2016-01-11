@@ -103,7 +103,9 @@ void PlaySound(int skip){
 		if (sd.Load("Bgm/bgm002") == FALSE){
 			exit(3);
 		}
-		sd.SetVolume(OM.volume);
+		//sd.SetVolume(OM.volume);
+		OM.Movement(FY_RIGHT, TRUE);
+		OM.Movement(FY_LEFT, TRUE);
 		pre_mode = 1;
 	}
 	else if (pre_mode == 1 && now_mode == 1){
@@ -111,12 +113,16 @@ void PlaySound(int skip){
 		if (sd.Load("Bgm/bgm001") == FALSE){
 			exit(3);
 		}
-		sd.SetVolume(OM.volume);
+		//sd.SetVolume(OM.volume);
+		OM.Movement(FY_RIGHT, TRUE);
+		OM.Movement(FY_LEFT, TRUE);
 		pre_mode = 0;
 	}
 	if (!(sd.IsPlaying())){
 		sd.Play(LOOP);
-		sd.SetVolume(OM.volume);
+		//sd.SetVolume(OM.volume);
+		OM.Movement(FY_RIGHT, TRUE);
+		OM.Movement(FY_LEFT, TRUE);
 	}
 }
 /*-------------------------------------------------------------
